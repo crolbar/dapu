@@ -1,0 +1,6 @@
+- [ ] preview dirs in sel_dir / cat README.md or TODO.md 
+- [ ] a way to add/remove dirs in dirs vector (clap with args)
+- [ ] custom command to execute on sel_dir
+- [ ] binds help on bars 
+- [ ] customize bars ? (clock / git on sel_dir)
+- [ ] mouse support ?

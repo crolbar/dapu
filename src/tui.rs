@@ -1,6 +1,6 @@
 use crossterm::{
     terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen},
-    execute,
+    execute, event::{EnableMouseCapture, DisableMouseCapture},
 };
 use ratatui::{Terminal, prelude::CrosstermBackend};
 use std::io::{Stderr, Result, stderr};
@@ -15,8 +15,9 @@ pub struct Tui {
 impl Tui {
    pub fn enter() -> Result<Self> {
        enable_raw_mode()?;
-       execute!(stderr(), EnterAlternateScreen)?;
+       execute!(stderr(), EnterAlternateScreen, EnableMouseCapture)?;
        let mut term = Terminal::new(CrosstermBackend::new(stderr()))?;
+       term.hide_cursor()?;
        term.clear()?;
 
        Ok(Tui{term})
@@ -27,9 +28,10 @@ impl Tui {
        Ok(())
    }
 
-   pub fn exit(&self) -> Result<()> {
+   pub fn exit(&mut self) -> Result<()> {
+       execute!(stderr(), LeaveAlternateScreen, DisableMouseCapture)?;
        disable_raw_mode()?;
-       execute!(stderr(), LeaveAlternateScreen)?;
+       self.term.show_cursor()?;
        Ok(())
    }
 }
