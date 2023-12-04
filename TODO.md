@@ -1,6 +1,12 @@
-- [ ] preview dirs in sel_dir / cat README.md or TODO.md 
-- [ ] a way to add/remove dirs in dirs vector (clap with args)
+- [x] preview dirs in sel_dir / cat README.md or TODO.md 
+- [x] a way to add/remove dirs in dirs vector (clap with args)
 - [ ] custom command to execute on sel_dir
-- [ ] binds help on bars 
-- [ ] customize bars ? (clock / git on sel_dir)
+- [ ] open dir 
+- [ ] open file from preview
+- [ ] way to change default editor (default enter)
+- [x] display preview mode on bars
+- [ ] binds help on bars ?
+- [ ] customize bars ? (clock / git of sel_dir)
+
+- [ ] syntax highlighting on TODO/README files in preview ?
 - [ ] mouse support ?

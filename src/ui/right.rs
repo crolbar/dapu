@@ -9,7 +9,7 @@ pub fn render_right(app: &mut App, frame: &mut Frame, mid_layout: &Rc<[Rect]>) {
     match app.preview_type {
         PreviewType::Contents => render_preview_contents(sel_dir_path, mid_layout, frame),
         PreviewType::README => render_preview_readme(sel_dir_path, mid_layout, frame),
-        PreviewType::TODO => ()
+        PreviewType::TODO => render_preview_todo(sel_dir_path, mid_layout, frame),
     }
 }
 
@@ -23,6 +23,18 @@ fn render_preview_readme(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mu
         }
 
     }
+}
+
+fn render_preview_todo(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
+    if let Ok(read_dir) = &mut std::fs::read_dir(sel_dir_path) {
+        if let Some(todo) = read_dir.find(|f| f.as_ref().unwrap().file_name().to_str().unwrap().contains("TODO")) {
+            frame.render_widget(
+                Paragraph::new(std::fs::read_to_string(todo.unwrap().path()).unwrap()),
+                Layout::default().constraints([Constraint::Percentage(100)]).margin(1).split(mid_layout[1])[0]
+            )
+        }
+    }
+
 }
 
 fn render_preview_contents(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {

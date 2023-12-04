@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, Event, self};
-use crate::{app::{App, PreviewType}, tui::Tui};
+use crate::{app::{App, PreviewType, MainWindows}, tui::Tui};
 use std::io::Result;
 
 
@@ -19,10 +19,10 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
         }
 
         KeyCode::Char('h') => {
-            app.sel_window = 0
+            app.sel_window = MainWindows::Right 
         }
         KeyCode::Char('l') => {
-            app.sel_window = 1
+            app.sel_window = MainWindows::Left
         }
 
         KeyCode::Char('c') => {
@@ -36,15 +36,23 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
         }
 
         KeyCode::Enter => {
-            app.save_to_conf();
-            app.exit = true;
+            match app.sel_window {
+                MainWindows::Left =>  {
+                    app.save_to_conf();
+                    app.exit = true;
 
-            let path = &app.dirs[app.sel_dir];
+                    let path = &app.dirs[app.sel_dir];
 
-            if app.has_alias{
-                println!("{}", path.to_str().unwrap());
-            } else {
-                std::process::Command::new("nvim").arg(path).status().unwrap();
+                    if app.only_output_path {
+                        println!("{}", path.to_str().unwrap());
+                    } else {
+                        std::process::Command::new("nvim").arg(path).status().unwrap();
+                    }
+
+                }
+                MainWindows::Right =>  {
+
+                }
             }
         }
 
