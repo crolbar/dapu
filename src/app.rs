@@ -3,7 +3,7 @@ use crate::utils::*;
 use serde::{Serialize, Deserialize};
 
 
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Clone)]
 pub enum PreviewType {
     #[default]
     Contents,
@@ -11,18 +11,20 @@ pub enum PreviewType {
     README,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Clone)]
 pub enum MainWindows {
     #[default]
     Left,
     Right,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct App {
     pub exit: bool,
     pub dirs: Vec<PathBuf>,
     pub sel_dir: usize,
+    pub preview_conts_dirs: Vec<PathBuf>,
+    pub sel_prev_conts_dir: usize,
     pub sel_window: MainWindows,
     pub preview_type: PreviewType,
     pub only_output_path: bool,

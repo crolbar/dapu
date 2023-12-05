@@ -1,16 +1,60 @@
-use std::{rc::Rc, fs::DirEntry};
-
+use std::{rc::Rc, path::PathBuf};
 use ratatui::{prelude::*, widgets::*};
-use crate::app::{App, PreviewType};
+use crate::{app::{App, PreviewType, MainWindows}, utils::exit_with_err_msg};
 
 pub fn render_right(app: &mut App, frame: &mut Frame, mid_layout: &Rc<[Rect]>) {
-    let sel_dir_path = app.dirs[app.sel_dir].to_str().unwrap();
+    let app_dirs = app.dirs.clone();
+    let sel_dir_path = app_dirs[app.sel_dir].to_str().unwrap();
 
     match app.preview_type {
-        PreviewType::Contents => render_preview_contents(sel_dir_path, mid_layout, frame),
+        PreviewType::Contents => render_preview_contents(app, sel_dir_path, mid_layout, frame),
         PreviewType::README => render_preview_readme(sel_dir_path, mid_layout, frame),
         PreviewType::TODO => render_preview_todo(sel_dir_path, mid_layout, frame),
     }
+}
+
+fn render_preview_contents(app: &mut App, sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
+    if let Ok(read_dir) = std::fs::read_dir(sel_dir_path) {
+
+        app.preview_conts_dirs = 
+            read_dir.map(|f| 
+                f.unwrap_or_else(|_| {
+                    exit_with_err_msg("No permissions to read file in directory or file dosnt exist");
+                    unreachable!()
+                }).path()
+            ).collect();
+
+        let mut constraints = vec![];
+        for _ in 0..app.preview_conts_dirs.len() {
+            constraints.push(Constraint::Min(1))
+        }
+        // fill the empty space
+        constraints.push(Constraint::Percentage(100));
+
+        let mid_right_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(constraints)
+            .margin(1)
+            .split(mid_layout[1]);
+
+
+        for (i, file_path) in app.preview_conts_dirs.iter().enumerate() {
+            let mut file_paragrapth = 
+                format_file_p(
+                    file_path.file_name().unwrap().to_str().unwrap().to_string(),
+                    &file_path
+                );
+            if app.sel_window == MainWindows::Right && app.sel_prev_conts_dir == i {
+                file_paragrapth = file_paragrapth.on_red();
+            }
+
+            frame.render_widget(
+                file_paragrapth,
+                mid_right_layout[i]
+            )
+        }
+    }
+
 }
 
 fn render_preview_readme(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
@@ -37,42 +81,9 @@ fn render_preview_todo(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut 
 
 }
 
-fn render_preview_contents(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
-    if let Ok(read_dir) = std::fs::read_dir(sel_dir_path){
-        let mut dir_contents = vec![];
-        read_dir.for_each(|f| dir_contents.push(f));
-
-        let mut constraints = vec![];
-        for _ in 0..dir_contents.len() {
-            constraints.push(Constraint::Min(1))
-        }
-        // fill the empty space
-        constraints.push(Constraint::Percentage(100));
-
-        let mid_right_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(constraints)
-            .margin(1)
-            .split(mid_layout[1]);
 
 
-        for (i, f) in dir_contents.iter().enumerate() {
-            let file = f.as_ref().unwrap();
-
-            let file_paragrapth = 
-                format_file_p(file.file_name().to_str().unwrap().to_string(), file);
-
-            frame.render_widget(
-                file_paragrapth,
-                mid_right_layout[i]
-            )
-        }
-    }
-
-}
-
-
-fn format_file_p(file_name: String, file: &DirEntry) -> Paragraph {
+fn format_file_p(file_name: String, file_path: &PathBuf) -> Paragraph {
     if file_name.contains("git") {
         Paragraph::new(format!(" {}", file_name)).dark_gray()
     } else if file_name.ends_with(".nix") {
@@ -89,7 +100,7 @@ fn format_file_p(file_name: String, file: &DirEntry) -> Paragraph {
         Paragraph::new(format!(" {}", file_name)).green()
     } else if file_name.ends_with(".md") {
         Paragraph::new(format!(" {}", file_name)).white()
-    } else if file.file_type().unwrap().is_dir() {
+    } else if file_path.is_dir() {
         Paragraph::new(format!(" {}", file_name)).light_blue()
     } else {
         Paragraph::new(file_name)

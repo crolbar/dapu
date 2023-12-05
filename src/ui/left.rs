@@ -5,7 +5,7 @@ use crate::app::App;
 pub fn render_left(app: &mut App, frame: &mut Frame, mid_layout:  &Rc<[Rect]>) {
 
     let mut constraints = vec![];
-    for _ in &app.dirs  {
+    for _ in 0..app.dirs.len()  {
         constraints.push(Constraint::Min(2))
     }
     constraints.push(Constraint::Percentage(100));

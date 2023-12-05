@@ -1,8 +1,10 @@
 - [x] preview dirs in sel_dir / cat README.md or TODO.md 
 - [x] a way to add/remove dirs in dirs vector (clap with args)
 - [ ] custom command to execute on sel_dir
-- [ ] open dir 
-- [ ] open file from preview
+- [x] open dir from preview
+- [ ] ~~open file from preview~~
+- [ ] change dir from preview (small file explorer?) ?
+- [ ] switch from open in editor and output path
 - [ ] way to change default editor (default enter)
 - [x] display preview mode on bars
 - [ ] binds help on bars ?
