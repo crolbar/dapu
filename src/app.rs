@@ -66,7 +66,7 @@ impl App {
                 Ok(config_file_contents) => {
                     let mut instance: App = ron::de::from_str(
                         &config_file_contents
-                        ).unwrap();
+                    ).unwrap();
 
                     if let Some(add_dir) = add_dir {
                         let add_dir_full_path = PathBuf::from(add_dir).canonicalize().unwrap_or_else(|_|{

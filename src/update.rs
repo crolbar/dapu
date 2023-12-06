@@ -1,4 +1,4 @@
-use crossterm::event::{KeyCode, Event, self};
+use crossterm::event::{KeyCode, Event, self, KeyModifiers};
 use crate::{app::{App, PreviewType, MainWindows}, tui::Tui};
 use std::io::Result;
 
@@ -6,7 +6,9 @@ use std::io::Result;
 pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
   if let Event::Key(key) = event::read()? {
       match key.code {
-        KeyCode::Char('q') => {app.exit = true; }
+        KeyCode::Char('q') => app.exit = true,
+
+        KeyCode::Char('o') => app.only_output_path = !app.only_output_path,
 
         KeyCode::Char('j') => {
             match app.sel_window {
@@ -54,49 +56,35 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
         }
 
         KeyCode::Enter => {
-            match app.sel_window {
-                MainWindows::Right =>  {
+            app.save_to_conf();
+            app.exit = true;
 
-                    let path = &app.preview_conts_dirs[app.sel_prev_conts_dir];
+            let path = 
+                match app.sel_window {
+                    MainWindows::Right => &app.preview_conts_dirs[app.sel_prev_conts_dir],
+                    MainWindows::Left => &app.dirs[app.sel_dir]
+                };
 
-                    if path.is_dir() {
-                        app.save_to_conf();
-                        app.exit = true;
+            if key.modifiers == KeyModifiers::ALT {
+                std::process::Command::new("nano").arg(path).status().unwrap();
+            } else {
 
-                        if app.only_output_path {
-                            println!("{}", path.to_str().unwrap());
-                        } else {
-                            std::process::Command::new("nvim").arg(path).status().unwrap();
-                        }
-                    } else {
-                        app.save_to_conf();
-                        app.exit = true;
-                        if app.only_output_path {
-                            println!("{}", path.parent().unwrap().to_str().unwrap());
-                        } else {
-                            std::process::Command::new("nvim").arg(path).status().unwrap();
-                        }
+                if app.only_output_path {
+                    match path.is_dir() {
+                        true => println!("{}", path.to_str().unwrap()),
+                        false => println!("{}", path.parent().unwrap().to_str().unwrap())
                     }
-
-
-                }
-                MainWindows::Left =>  {
-                    app.save_to_conf();
-                    app.exit = true;
-
-                    let path = &app.dirs[app.sel_dir];
-
-                    if app.only_output_path {
-                        println!("{}", path.to_str().unwrap());
-                    } else {
-                        std::process::Command::new("nvim").arg(path).status().unwrap();
-                    }
+                } else {
+                    std::process::Command::new("nvim").arg(path).status().unwrap();
                 }
             }
-        }
+
+        } // enter
 
         _ => (),
-    }
+    } // match key.code
+
+
   }
 
   Ok(())
