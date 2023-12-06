@@ -5,6 +5,7 @@ mod right;
 mod left;
 mod bars;
 mod main;
+mod float;
 
 
 pub fn render(app: &mut App, frame: &mut Frame) {
@@ -27,4 +28,5 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     left::render_left(app, frame, &mid_layout);
     right::render_right(app, frame, &mid_layout);
     bars::render_bars(app, frame, &main_layout);
+    float::render_float(app, frame);
 }

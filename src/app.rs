@@ -12,10 +12,18 @@ pub enum PreviewType {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, Clone)]
-pub enum MainWindows {
+pub enum CurrentWindow {
     #[default]
     Left,
     Right,
+    Float(FloatWindows),
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub enum FloatWindows {
+    ChangeEditor,
+    EditCustomComm,
+    AddFolder,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -25,7 +33,7 @@ pub struct App {
     pub sel_dir: usize,
     pub preview_conts_dirs: Vec<PathBuf>,
     pub sel_prev_conts_dir: usize,
-    pub sel_window: MainWindows,
+    pub sel_window: CurrentWindow,
     pub preview_type: PreviewType,
     pub only_output_path: bool,
 }

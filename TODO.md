@@ -3,10 +3,12 @@
 - [x] open dir from preview
 - [x] open file from preview
 - [ ] ~~change dir from preview (small file explorer?) ?~~
-- [ ] custom command to execute on sel_dir
+
 - [x] switch from open in editor and output path with bind 
-- [ ] way to change default editor (default enter)
-- [ ] dialog box to add folders (starts in home folder) ?
+- [ ] user input
+    - [ ] custom command to execute on sel_dir
+    - [ ] way to change default editor (default enter)
+    - [ ] dialog box to add folders (starts in home folder) ?
 
 - [x] display preview mode on bars
 

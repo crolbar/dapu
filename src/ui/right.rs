@@ -1,6 +1,6 @@
 use std::{rc::Rc, path::PathBuf};
 use ratatui::{prelude::*, widgets::*};
-use crate::{app::{App, PreviewType, MainWindows}, utils::exit_with_err_msg};
+use crate::{app::{App, PreviewType, CurrentWindow}, utils::exit_with_err_msg};
 
 pub fn render_right(app: &mut App, frame: &mut Frame, mid_layout: &Rc<[Rect]>) {
     let app_dirs = app.dirs.clone();
@@ -44,7 +44,7 @@ fn render_preview_contents(app: &mut App, sel_dir_path: &str, mid_layout: &Rc<[R
                     file_path.file_name().unwrap().to_str().unwrap().to_string(),
                     &file_path
                 );
-            if app.sel_window == MainWindows::Right && app.sel_prev_conts_dir == i {
+            if app.sel_window == CurrentWindow::Right && app.sel_prev_conts_dir == i {
                 file_paragrapth = file_paragrapth.on_red();
             }
 

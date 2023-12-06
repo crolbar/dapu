@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, Event, self, KeyModifiers};
-use crate::{app::{App, PreviewType, MainWindows}, tui::Tui};
+use crate::{app::{App, PreviewType, FloatWindows, CurrentWindow}, tui::Tui};
 use std::io::Result;
 
 
@@ -12,37 +12,39 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
 
         KeyCode::Char('j') => {
             match app.sel_window {
-                MainWindows::Right => {
+                CurrentWindow::Right => {
                     app.sel_prev_conts_dir = (app.sel_prev_conts_dir + 1) % app.preview_conts_dirs.len()
                 }
-                MainWindows::Left => {
+                CurrentWindow::Left => {
                     app.sel_dir = (app.sel_dir + 1) % app.dirs.len()
                 }
+                _ => ()
             }
         }
 
         KeyCode::Char('k') => {
             match app.sel_window {
-                MainWindows::Right => {
+                CurrentWindow::Right => {
                     app.sel_prev_conts_dir = match app.sel_prev_conts_dir {
                         0 => app.preview_conts_dirs.len() - 1,
                         _ => app.sel_prev_conts_dir - 1 
                     }
                 }
-                MainWindows::Left => {
+                CurrentWindow::Left => {
                     app.sel_dir = match app.sel_dir {
                         0 => app.dirs.len() - 1,
                         _ => app.sel_dir - 1 
                     }
                 }
+                _ => ()
             }
         }
 
         KeyCode::Char('h') => {
-            app.sel_window = MainWindows::Left
+            app.sel_window = CurrentWindow::Left
         }
         KeyCode::Char('l') => {
-            app.sel_window = MainWindows::Right
+            app.sel_window = CurrentWindow::Right
         }
 
         KeyCode::Char('c') => {
@@ -55,14 +57,19 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
             app.preview_type = PreviewType::README
         }
 
+        KeyCode::Char('1') => app.sel_window = CurrentWindow::Float(FloatWindows::EditCustomComm),
+        KeyCode::Char('2') => app.sel_window = CurrentWindow::Float(FloatWindows::ChangeEditor),
+        KeyCode::Char('3') => app.sel_window = CurrentWindow::Float(FloatWindows::AddFolder),
+
         KeyCode::Enter => {
             app.save_to_conf();
             app.exit = true;
 
             let path = 
                 match app.sel_window {
-                    MainWindows::Right => &app.preview_conts_dirs[app.sel_prev_conts_dir],
-                    MainWindows::Left => &app.dirs[app.sel_dir]
+                    CurrentWindow::Right => &app.preview_conts_dirs[app.sel_prev_conts_dir],
+                    CurrentWindow::Left => &app.dirs[app.sel_dir],
+                    _ => unreachable!()
                 };
 
             if key.modifiers == KeyModifiers::ALT {
