@@ -13,20 +13,36 @@ pub fn render_bars(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
 fn render_top_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
     let time = format!("{}:{}:{}", Local::now().hour(), chrono::Local::now().minute(), chrono::Local::now().second());
 
+    let repo = Repository::open(&app.dirs[app.sel_dir]).unwrap();
+
+    let branch = repo.head().unwrap();
+    let branch = branch.shorthand().unwrap();
+    let remote = repo.remotes().unwrap();
+    let remote = remote.iter().next().unwrap().unwrap();
+
     let top_bar_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
             Constraint::Percentage(100),
-            Constraint::Min(time.len() as u16),
+            Constraint::Min(remote.len() as u16),
+            Constraint::Min(branch.len() as u16),
             Constraint::Min(time.len() as u16),
         ])
         .split(main_layout[0]);
 
+
     
-    //frame.render_widget(
-    //    Paragraph::new(repo.head().unwrap().shorthand().unwrap()),
-    //    top_bar_layout[1]
-    //);
+    // branch
+    frame.render_widget(
+        Paragraph::new(remote),
+        top_bar_layout[1]
+    );
+
+    // remotes
+    frame.render_widget(
+        Paragraph::new(branch),
+        top_bar_layout[2]
+    );
 
     frame.render_widget(
         Paragraph::new(time).green(),
