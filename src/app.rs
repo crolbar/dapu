@@ -16,14 +16,6 @@ pub enum CurrentWindow {
     #[default]
     Left,
     Right,
-    Float(FloatWindows),
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-pub enum FloatWindows {
-    ChangeEditor,
-    EditCustomComm,
-    AddFolder,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]

@@ -1,6 +1,8 @@
-pub use ratatui::{prelude::*, widgets::*};
+use ratatui::{prelude::*, widgets::*};
 use crate::app::{App, PreviewType};
+use chrono::{Local, Timelike};
 use std::rc::Rc;
+use git2::Repository;
 
 pub fn render_bars(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
     render_bottom_bar(app, frame, main_layout);
@@ -8,11 +10,30 @@ pub fn render_bars(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
 }
 
 
-fn render_top_bar(_app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
+fn render_top_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
+    let time = format!("{}:{}:{}", Local::now().hour(), chrono::Local::now().minute(), chrono::Local::now().second());
+
+    let top_bar_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(100),
+            Constraint::Min(time.len() as u16),
+            Constraint::Min(time.len() as u16),
+        ])
+        .split(main_layout[0]);
+
+    
+    //frame.render_widget(
+    //    Paragraph::new(repo.head().unwrap().shorthand().unwrap()),
+    //    top_bar_layout[1]
+    //);
+
     frame.render_widget(
-        Block::new().borders(Borders::TOP).title("Status Bar"),
-        main_layout[0],
+        Paragraph::new(time).green(),
+        top_bar_layout[(top_bar_layout.len() - 1) as usize]
     );
+
+
 }
 
 
@@ -27,7 +48,7 @@ fn render_bottom_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>)
     let only_output_path_label = "output path";
 
     let constraints = [
-        Constraint::Percentage(95), //fill
+        Constraint::Percentage(100), //fill
                                    
         Constraint::Min(
             (only_output_path_label.len() + 2) as u16
@@ -45,13 +66,12 @@ fn render_bottom_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>)
         Constraint::Min(
             (preview_mode_paragraphs[2].1.len()+2) as u16
         ), // prvu todo 
-           
-        Constraint::Min(2), // fill
     ];
 
     let bottom_bar_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(constraints)
+        .horizontal_margin(3)
         .split(main_layout[2]);
 
     { // prvu mode
@@ -87,10 +107,4 @@ fn render_bottom_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>)
           bottom_bar_layout[1]
       )
     }
-
-
-    // fill gaps
-    frame.render_widget(Block::new().borders(Borders::TOP), bottom_bar_layout[0]);
-    frame.render_widget(Block::new().borders(Borders::TOP), bottom_bar_layout[constraints.len() - 1]);
-
 }
