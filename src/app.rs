@@ -28,6 +28,7 @@ pub struct App {
     pub sel_window: CurrentWindow,
     pub preview_type: PreviewType,
     pub only_output_path: bool,
+    pub custom_cmd: String,
 }
 
 impl App {

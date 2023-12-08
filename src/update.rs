@@ -24,9 +24,11 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                         CurrentWindow::Right => &app.preview_conts_dirs[app.sel_prev_conts_dir],
                         CurrentWindow::Left => &app.dirs[app.sel_dir],
                     };
+                
+                let cmd = app.custom_cmd.replace("{}", path.to_str().unwrap());
 
                 if key.modifiers == KeyModifiers::ALT { // custom command to exec on dir
-                    std::process::Command::new("nano").arg(path).status().unwrap();
+                    std::process::Command::new("sh").arg("-c").arg(&cmd).status().unwrap();
 
                 } else {
                     if app.only_output_path {

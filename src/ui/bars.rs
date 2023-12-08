@@ -1,6 +1,5 @@
 use ratatui::{prelude::*, widgets::*};
 use crate::app::{App, PreviewType};
-use chrono::{Local, Timelike};
 use std::rc::Rc;
 use git2::Repository;
 
@@ -11,41 +10,77 @@ pub fn render_bars(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
 
 
 fn render_top_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
-    let time = format!("{}:{}:{}", Local::now().hour(), chrono::Local::now().minute(), chrono::Local::now().second());
+    let time = format!("{}", chrono::Local::now().format("%Y-%m-%d %I:%M:%S %p"));
 
-    let repo = Repository::open(&app.dirs[app.sel_dir]).unwrap();
+    let mut constraints = vec![
+        Constraint::Percentage(100),
+        Constraint::Min(time.len() as u16 + 2),
+    ];
+    let mut remote_urls = vec![];
+    let mut branch = String::new();
 
-    let branch = repo.head().unwrap();
-    let branch = branch.shorthand().unwrap();
-    let remote = repo.remotes().unwrap();
-    let remote = remote.iter().next().unwrap().unwrap();
+    if let Ok(repo) = Repository::open(&app.dirs[app.sel_dir]) {
+
+        if let Ok(head) = repo.head() {
+            branch = format!(" {}", head.shorthand().unwrap().to_string());
+
+            constraints.insert(0, Constraint::Min(branch.len() as u16));
+        }
+
+
+        if let Ok(remotes) = repo.remotes() {
+            for i in &remotes {
+                let remote_url = repo
+                    .find_remote(i.unwrap()).unwrap()
+                    .url().unwrap()
+                    .to_string()
+                    .replace("http://", "")
+                    .replace("https://", "");
+
+                let remote_url =
+                    if remote_url.contains("github") {
+                        format!(" {}", remote_url)
+                    } else {
+                        format!(" {}", remote_url)
+                    };
+
+                constraints.insert(0, Constraint::Min(remote_url.len() as u16));
+                remote_urls.insert(0, remote_url)
+            }
+        }
+
+    }
 
     let top_bar_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(100),
-            Constraint::Min(remote.len() as u16),
-            Constraint::Min(branch.len() as u16),
-            Constraint::Min(time.len() as u16),
-        ])
+        .constraints(constraints.clone())
+        .horizontal_margin(3)
         .split(main_layout[0]);
 
 
-    
-    // branch
-    frame.render_widget(
-        Paragraph::new(remote),
-        top_bar_layout[1]
-    );
+    if constraints.len() > 2 {
+        // branch 
+        frame.render_widget(
+            Paragraph::new(branch).dark_gray()
+            .block(Block::default().borders(Borders::LEFT | Borders::RIGHT)),
+            top_bar_layout[(top_bar_layout.len() - 3) as usize]
+        );
 
-    // remotes
-    frame.render_widget(
-        Paragraph::new(branch),
-        top_bar_layout[2]
-    );
+
+
+        // remotes
+        for (i, url) in remote_urls.iter().enumerate() {
+            frame.render_widget(
+                Paragraph::new(url.to_string()).gray()
+                .block(Block::default().borders(Borders::LEFT | Borders::RIGHT)),
+                top_bar_layout[i]
+            );
+        }
+    }
 
     frame.render_widget(
-        Paragraph::new(time).green(),
+        Paragraph::new(time).green()
+        .block(Block::default().borders(Borders::LEFT | Borders::RIGHT)),
         top_bar_layout[(top_bar_layout.len() - 1) as usize]
     );
 

@@ -8,6 +8,7 @@
 - [ ] dialog box to add folders (starts in home folder) ?
 - [ ] customize bars  (clock / git of sel_dir) ?
 - [ ] binds help on bars ?
+
 - [ ] syntax highlighting on TODO/README files in preview ?
 - [ ] mouse support ?
 - [x] arrow keys
