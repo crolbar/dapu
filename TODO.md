@@ -7,7 +7,7 @@
 
 - [ ] dialog box to add folders (starts in home folder) ?
 - [x] bind to remove sel_dir
-- [ ] bind to undo remove sel_dir
+- [x] bind to undo remove sel_dir
 - [x] git pull bind
 - [x] status if the repo is up to date
 

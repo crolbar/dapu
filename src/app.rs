@@ -30,6 +30,7 @@ pub struct App {
     pub only_output_path: bool,
     pub custom_cmd: String,
     pub git_pull_out: String,
+    pub undo_vec: Vec<(PathBuf, usize)>,
 }
 
 impl App {

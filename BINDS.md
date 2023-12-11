@@ -1,0 +1,16 @@
+- q / esc - quit out of dapu
+- k / arrow up - move up in dir selection
+- j / arrow donw - move down in dir selection
+- h / l / arrow left / arrow right - switch between left and right window
+- D - remove selected directory from left window (from dapu)
+- u - undo the remove
+- g / G - move to the top / bottom of the dir selection
+- p-p - executes git pull on the selected directory
+- f - executes git fetch on the selected directory
+- Enter - if the o in the bottom left corner is green output the path of the selected dir if it is red it opens the selected directory with the default editor 
+- o - changes between open the selected directory with the default editor and output the path of that directory
+- Alt + Enter - executes the custom command on the selected directory (the custom command can be set/changed in the config file)
+
+- c - changes the preview type to contents so the right window will show the contents of the selected directory
+- t - changes the preview type to todo so if that directory has an TODO.md in it it will display the contents of the file
+- r - changes the preview type to readme so if that directory has an README.md in it will display the contents of the readme file
