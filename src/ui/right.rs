@@ -1,33 +1,25 @@
 use std::{rc::Rc, path::PathBuf};
 use ratatui::{prelude::*, widgets::*};
-use crate::{app::{App, PreviewType, CurrentWindow}, utils::exit_with_err_msg};
+use crate::app::{App, PreviewType, CurrentWindow};
 
-pub fn render_right(app: &mut App, frame: &mut Frame, mid_layout: &Rc<[Rect]>) {
+pub fn render_right(app: &App, frame: &mut Frame, mid_layout: &Rc<[Rect]>) {
     let app_dirs = app.dirs.clone();
     let sel_dir_path = app_dirs[app.sel_dir].to_str().unwrap();
 
     match app.preview_type {
-        PreviewType::Contents => render_preview_contents(app, sel_dir_path, mid_layout, frame),
+        PreviewType::Contents => render_preview_contents(app, mid_layout, frame),
         PreviewType::README => render_preview_readme(sel_dir_path, mid_layout, frame),
         PreviewType::TODO => render_preview_todo(sel_dir_path, mid_layout, frame),
     }
 }
 
-fn render_preview_contents(app: &mut App, sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
-    if let Ok(read_dir) = std::fs::read_dir(sel_dir_path) {
-
-        app.preview_conts_dirs = 
-            read_dir.map(|f| 
-                f.unwrap_or_else(|_| {
-                    exit_with_err_msg("No permissions to read file in directory or file dosnt exist");
-                    unreachable!()
-                }).path()
-            ).collect();
-
+fn render_preview_contents(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
+    if !app.preview_conts_dirs.is_empty() {
         let mut constraints = vec![];
         for _ in 0..app.preview_conts_dirs.len() {
             constraints.push(Constraint::Min(1))
         }
+        
         // fill the empty space
         constraints.push(Constraint::Percentage(100));
 
@@ -54,7 +46,6 @@ fn render_preview_contents(app: &mut App, sel_dir_path: &str, mid_layout: &Rc<[R
             )
         }
     }
-
 }
 
 fn render_preview_readme(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
@@ -86,24 +77,34 @@ fn render_preview_todo(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut 
 fn format_file_p(file_name: String, file_path: &PathBuf) -> Paragraph {
     if file_name.contains("git") {
         Paragraph::new(format!(" {}", file_name)).dark_gray()
+
     } else if file_name.ends_with(".nix") {
         Paragraph::new(format!(" {}", file_name)).blue()
+
     } else if file_name.contains("src") {
         Paragraph::new(format!(" {}", file_name)).green()
+
     } else if file_name.ends_with(".lock") {
         Paragraph::new(format!(" {}", file_name)).white()
+
     } else if file_name.ends_with(".toml") {
         Paragraph::new(format!(" {}", file_name)).white()
+
     } else if file_name.ends_with("LICENSE") {
         Paragraph::new(format!(" {}", file_name)).yellow()
+
     } else if file_name.ends_with("TODO.md") {
         Paragraph::new(format!(" {}", file_name)).green()
+
     } else if file_name.ends_with(".md") {
         Paragraph::new(format!(" {}", file_name)).white()
+
     } else if file_name.ends_with(".sh") {
         Paragraph::new(format!(" {}", file_name)).green()
+
     } else if file_path.is_dir() {
         Paragraph::new(format!(" {}", file_name)).light_blue()
+
     } else {
         Paragraph::new(file_name)
     }

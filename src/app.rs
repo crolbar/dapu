@@ -54,6 +54,22 @@ impl App {
 
     } 
 
+    pub fn update_prev_dirs(&mut self) {
+        if let Ok(read_dir) = std::fs::read_dir(self.dirs[self.sel_dir].canonicalize().unwrap().to_str().unwrap()) {
+            self.preview_conts_dirs = 
+                read_dir.map(|f| 
+                    f.unwrap_or_else(|_| {
+                        exit_with_err_msg("No permissions to read file in directory or file dosnt exist");
+                        unreachable!()
+                    }).path()
+                ).collect();
+
+            if self.sel_prev_conts_dir > self.preview_conts_dirs.len() - 1 {
+                self.sel_prev_conts_dir = self.preview_conts_dirs.len() - 1
+            }
+        }
+    }
+
     pub fn save_to_conf(&self) {
         let config_dir_path = dirs::config_dir().unwrap().join("dapu");
         let instance = ron::ser::to_string_pretty(self, ron::ser::PrettyConfig::default()).unwrap();
