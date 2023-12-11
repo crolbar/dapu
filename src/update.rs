@@ -24,10 +24,18 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                         CurrentWindow::Right => &app.preview_conts_dirs[app.sel_prev_conts_dir],
                         CurrentWindow::Left => &app.dirs[app.sel_dir],
                     };
-                
-                let cmd = app.custom_cmd.replace("{}", path.to_str().unwrap());
 
                 if key.modifiers == KeyModifiers::ALT { // custom command to exec on dir
+                    let cmd = 
+                        match app.custom_cmd.get(0..1) {
+                            Some("!") => {
+                                app.exit = false;
+                                app.custom_cmd.replace("{}", path.to_str().unwrap()).replacen("!", "", 1)
+                            },
+
+                            _ => app.custom_cmd.replace("{}", path.to_str().unwrap())
+                        };
+
                     std::process::Command::new("sh").arg("-c").arg(&cmd).status().unwrap();
 
                 } else {

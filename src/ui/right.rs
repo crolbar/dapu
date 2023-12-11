@@ -100,6 +100,8 @@ fn format_file_p(file_name: String, file_path: &PathBuf) -> Paragraph {
         Paragraph::new(format!(" {}", file_name)).green()
     } else if file_name.ends_with(".md") {
         Paragraph::new(format!(" {}", file_name)).white()
+    } else if file_name.ends_with(".sh") {
+        Paragraph::new(format!(" {}", file_name)).green()
     } else if file_path.is_dir() {
         Paragraph::new(format!(" {}", file_name)).light_blue()
     } else {
