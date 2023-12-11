@@ -2,7 +2,7 @@ use ratatui::{prelude::*, widgets::*, symbols::border};
 use std::rc::Rc;
 use crate::app::App;
 
-pub fn render_left(app: &mut App, frame: &mut Frame, mid_layout:  &Rc<[Rect]>) {
+pub fn render_left(app: &App, frame: &mut Frame, mid_layout:  &Rc<[Rect]>) {
 
     let mut constraints = vec![];
     for _ in 0..app.dirs.len()  {
