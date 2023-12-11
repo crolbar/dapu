@@ -6,9 +6,14 @@
 - [x] display preview mode on bars
 
 - [ ] dialog box to add folders (starts in home folder) ?
-- [ ] customize bars  (clock / git of sel_dir) ?
-- [ ] binds help on bars ?
+- [ ] bind to remove sel_dir
+- [x] git pull bind
+- [ ] status if the repo is up to date
 
+- [ ] better way of doing aliases to switch working dir ?
+
+- [x] customize bars  (clock / git of sel_dir) ?
 - [ ] syntax highlighting on TODO/README files in preview ?
+- [ ] binds help on bars ?
 - [ ] mouse support ?
 - [x] arrow keys

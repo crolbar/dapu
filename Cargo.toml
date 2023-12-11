@@ -3,6 +3,9 @@ name = "dapu"
 version = "0.1.0"
 edition = "2021"
 
+[build-dependencies]
+cargo-make = "0.37.4"
+
 [dependencies]
 ratatui = "0.24"
 crossterm = "0.27"

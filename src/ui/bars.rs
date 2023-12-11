@@ -5,51 +5,52 @@ use git2::Repository;
 
 pub fn render_bars(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
     render_bottom_bar(app, frame, main_layout);
-    render_top_bar(app, frame, main_layout);
+
+    match Repository::open(&app.dirs[app.sel_dir]) {
+        Ok(repo) => render_top_bar_git(app, frame, main_layout, repo),
+        Err(_) => render_top_bar(app, frame, main_layout)
+    }
 }
 
-
-fn render_top_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
+fn render_top_bar_git(_app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>, repo: Repository) {
     let time = format!("{}", chrono::Local::now().format("%Y-%m-%d %I:%M:%S %p"));
 
     let mut constraints = vec![
         Constraint::Percentage(100),
         Constraint::Min(time.len() as u16 + 2),
     ];
+
     let mut remote_urls = vec![];
     let mut branch = String::new();
 
-    if let Ok(repo) = Repository::open(&app.dirs[app.sel_dir]) {
+    if let Ok(head) = repo.head() {
+        branch = format!(" {}", head.shorthand().unwrap().to_string());
 
-        if let Ok(head) = repo.head() {
-            branch = format!(" {}", head.shorthand().unwrap().to_string());
-
-            constraints.insert(0, Constraint::Min(branch.len() as u16));
-        }
-
-
-        if let Ok(remotes) = repo.remotes() {
-            for i in &remotes {
-                let remote_url = repo
-                    .find_remote(i.unwrap()).unwrap()
-                    .url().unwrap()
-                    .to_string()
-                    .replace("http://", "")
-                    .replace("https://", "");
-
-                let remote_url =
-                    if remote_url.contains("github") {
-                        format!(" {}", remote_url)
-                    } else {
-                        format!(" {}", remote_url)
-                    };
-
-                constraints.insert(0, Constraint::Min(remote_url.len() as u16));
-                remote_urls.insert(0, remote_url)
-            }
-        }
-
+        constraints.insert(0, Constraint::Min(branch.len() as u16));
     }
+
+
+    if let Ok(remotes) = repo.remotes() {
+        for i in &remotes {
+            let remote_url = repo
+                .find_remote(i.unwrap()).unwrap()
+                .url().unwrap()
+                .to_string()
+                .replace("http://", "")
+                .replace("https://", "");
+
+            let remote_url =
+                if remote_url.contains("github") {
+                    format!(" {}", remote_url)
+                } else {
+                    format!(" {}", remote_url)
+                };
+
+            constraints.insert(0, Constraint::Min(remote_url.len() as u16));
+            remote_urls.insert(0, remote_url)
+        }
+    }
+
 
     let top_bar_layout = Layout::default()
         .direction(Direction::Horizontal)
@@ -58,17 +59,18 @@ fn render_top_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
         .split(main_layout[0]);
 
 
-    if constraints.len() > 2 {
-        // branch 
+    // branch 
+    if !branch.is_empty() {
         frame.render_widget(
             Paragraph::new(branch).dark_gray()
             .block(Block::default().borders(Borders::LEFT | Borders::RIGHT)),
             top_bar_layout[(top_bar_layout.len() - 3) as usize]
         );
+    }
 
 
-
-        // remotes
+    // remotes
+    if !remote_urls.is_empty() {
         for (i, url) in remote_urls.iter().enumerate() {
             frame.render_widget(
                 Paragraph::new(url.to_string()).gray()
@@ -78,13 +80,35 @@ fn render_top_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
         }
     }
 
+    // time
     frame.render_widget(
-        Paragraph::new(time).green()
+        Paragraph::new(time)
         .block(Block::default().borders(Borders::LEFT | Borders::RIGHT)),
         top_bar_layout[(top_bar_layout.len() - 1) as usize]
     );
+}
 
 
+
+fn render_top_bar(_app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
+    let time = format!("{}", chrono::Local::now().format("%Y-%m-%d %I:%M:%S %p"));
+
+    let constraints = vec![
+        Constraint::Percentage(100),
+        Constraint::Min(time.len() as u16 + 2),
+    ];
+
+    let top_bar_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(constraints.clone())
+        .horizontal_margin(3)
+        .split(main_layout[0]);
+
+    frame.render_widget(
+        Paragraph::new(time)
+        .block(Block::default().borders(Borders::LEFT | Borders::RIGHT)),
+        top_bar_layout[(top_bar_layout.len() - 1) as usize]
+    );
 }
 
 
@@ -94,20 +118,15 @@ fn render_bottom_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>)
         (PreviewType::README, "r"),
         (PreviewType::TODO, "t"),
     ];
-    let prvu_mode_label = "prvu mode:";
-
-    let only_output_path_label = "output path";
+    let only_output_path_label = "o";
 
     let constraints = [
         Constraint::Percentage(100), //fill
-                                   
+
         Constraint::Min(
             (only_output_path_label.len() + 2) as u16
         ), // only output path
                                     
-        Constraint::Min(
-            (prvu_mode_label.len()+2) as u16
-        ), // prvu mode label
         Constraint::Min(
             (preview_mode_paragraphs[0].1.len()+2) as u16
         ), // prvu cont
@@ -125,23 +144,23 @@ fn render_bottom_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>)
         .horizontal_margin(3)
         .split(main_layout[2]);
 
-    { // prvu mode
-        frame.render_widget(
-            Paragraph::new(prvu_mode_label).block(Block::default().borders(Borders::LEFT)).light_green(),
-            bottom_bar_layout[2]
-        );
+    frame.render_widget(
+        Paragraph::new(app.git_pull_out.clone()),
+        bottom_bar_layout[0]
+    );
 
+    { // prvu mode
         for (i, (par_type, par_text)) in preview_mode_paragraphs.iter().enumerate() {
             let paragraph =
                 match app.preview_type == *par_type {
-                    true => Paragraph::new(*par_text).light_green(),
+                    true => Paragraph::new(*par_text).green(),
                     false => Paragraph::new(*par_text)
                 };
 
             frame.render_widget(
                 paragraph
                 .block(Block::default().borders(Borders::RIGHT | Borders::LEFT)),
-                bottom_bar_layout[i+3] // +3 because of label and fill
+                bottom_bar_layout[i+2] // +3 because of label and fill
             )
         }
     }
@@ -149,7 +168,7 @@ fn render_bottom_bar(app: &mut App, frame: &mut Frame, main_layout: &Rc<[Rect]>)
     { // only path
       let parag =
           match app.only_output_path {
-              true => Paragraph::new(only_output_path_label).light_green(),
+              true => Paragraph::new(only_output_path_label).green(),
               false => Paragraph::new(only_output_path_label).red()
           };
 

@@ -6,7 +6,7 @@ use std::io::Result;
 pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
     if let Event::Key(key) = event::read()? {
         match key.code {
-            KeyCode::Char('q') => app.exit = true,
+            KeyCode::Char('q') =>{app.save_to_conf(); app.exit = true},
 
             KeyCode::Char('o') => app.only_output_path = !app.only_output_path,
 
@@ -68,17 +68,30 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                 if let CurrentWindow::Left = app.sel_window {
                     match key.code {
                         KeyCode::Char('j') | KeyCode::Down => {
-                            app.sel_dir = (app.sel_dir + 1) % app.dirs.len()
+                            app.sel_dir = (app.sel_dir + 1) % app.dirs.len();
+
+                            app.git_pull_out.clear();
                         }
 
                         KeyCode::Char('k') | KeyCode::Up => {
                             app.sel_dir = match app.sel_dir {
                                 0 => app.dirs.len() - 1,
                                 _ => app.sel_dir - 1 
-                            }
+                            };
+
+                            app.git_pull_out.clear();
                         }
 
                         KeyCode::Char('l') | KeyCode::Right => app.sel_window = CurrentWindow::Right,
+
+                        KeyCode::Char('p') => {
+                            std::env::set_current_dir(&app.dirs[app.sel_dir]).unwrap();
+                            let out = std::process::Command::new("git").arg("pull").output().unwrap();
+                            let stdout = out.stdout;
+                            let stderr = out.stderr;
+                            
+                            app.git_pull_out = String::from_utf8(stdout).unwrap().replace("\n", " ") +  &String::from_utf8(stderr).unwrap().replace("\n", " ")
+                        }
                         
 
                         _ => ()

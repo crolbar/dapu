@@ -1,0 +1,5 @@
+[tasks.inst]
+script = [
+  "cargo build",
+  "cp target/debug/dapu ~/bin"
+]

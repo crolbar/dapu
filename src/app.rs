@@ -29,6 +29,7 @@ pub struct App {
     pub preview_type: PreviewType,
     pub only_output_path: bool,
     pub custom_cmd: String,
+    pub git_pull_out: String,
 }
 
 impl App {
@@ -143,6 +144,7 @@ fn check_for_errs(app: App) -> App {
     }
     if app.sel_dir > app.dirs.len() - 1 { app.sel_dir = 0 };
     if app.exit { app.exit = false }
+    app.git_pull_out.clear();
 
     app
 }
