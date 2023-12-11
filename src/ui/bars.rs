@@ -6,9 +6,15 @@ use git2::Repository;
 pub fn render_bars(app: &App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
     render_bottom_bar(app, frame, main_layout);
 
-    match Repository::open(&app.dirs[app.sel_dir]) {
-        Ok(repo) => render_top_bar_git(app, frame, main_layout, repo),
-        Err(_) => render_top_bar(app, frame, main_layout)
+    match app.dirs.get(app.sel_dir) {
+        Some(sel_dir) => {
+            match Repository::open(sel_dir) {
+                Ok(repo) => render_top_bar_git(app, frame, main_layout, repo),
+                Err(_) => render_top_bar(app, frame, main_layout)
+            }
+        }
+        None => render_top_bar(app, frame, main_layout)
+
     }
 }
 

@@ -25,8 +25,10 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         ])
     .split(main_layout[1]);
 
+    if !app.dirs.is_empty() {
+        left::render_left(app, frame, &mid_layout);
+        right::render_right(app, frame, &mid_layout);
+    }
     main::render_main(app, frame, &mid_layout);
-    left::render_left(app, frame, &mid_layout);
-    right::render_right(app, frame, &mid_layout);
     bars::render_bars(app, frame, &main_layout);
 }

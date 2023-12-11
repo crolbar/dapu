@@ -97,6 +97,16 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                             
                             app.git_pull_out = String::from_utf8(stdout).unwrap().replace("\n", " ") +  &String::from_utf8(stderr).unwrap().replace("\n", " ")
                         }
+
+                        KeyCode::Char('D') => {
+                            app.dirs.remove(app.sel_dir);
+                            if app.sel_dir == app.dirs.len() && app.sel_dir != 0 {
+                                app.sel_dir -= 1;
+                            }
+                        }
+
+                        KeyCode::Char('G') => app.sel_dir = app.dirs.len() - 1,
+                        KeyCode::Char('g') => app.sel_dir = 0,
                         
 
                         _ => ()

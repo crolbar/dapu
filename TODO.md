@@ -6,9 +6,10 @@
 - [x] display preview mode on bars
 
 - [ ] dialog box to add folders (starts in home folder) ?
-- [ ] bind to remove sel_dir
+- [x] bind to remove sel_dir
+- [ ] bind to undo remove sel_dir
 - [x] git pull bind
-- [ ] status if the repo is up to date
+- [x] status if the repo is up to date
 
 - [ ] better way of doing aliases to switch working dir ?
 

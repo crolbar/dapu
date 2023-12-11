@@ -29,9 +29,9 @@ impl Tui {
    }
 
    pub fn exit(&mut self) -> Result<()> {
+       self.term.show_cursor()?;
        execute!(stderr(), LeaveAlternateScreen, DisableMouseCapture)?;
        disable_raw_mode()?;
-       self.term.show_cursor()?;
        Ok(())
    }
 }
