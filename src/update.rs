@@ -44,7 +44,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
             }
 
             _ => {
-                // binds for when in preview window / right
+                // binds for preview window / right
                 if let CurrentWindow::Right = app.sel_window {
                     match key.code {
                         KeyCode::Char('j') | KeyCode::Down => {
@@ -64,7 +64,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                     }
                 }
 
-                // binds for when in left / main window
+                // binds for left / main window
                 if let CurrentWindow::Left = app.sel_window {
                     match key.code {
                         KeyCode::Char('j') | KeyCode::Down => {
@@ -83,6 +83,11 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                         }
 
                         KeyCode::Char('l') | KeyCode::Right => app.sel_window = CurrentWindow::Right,
+
+                        KeyCode::Char('f') => {
+                            std::env::set_current_dir(&app.dirs[app.sel_dir]).unwrap();
+                            std::process::Command::new("git").arg("fetch").output().unwrap();
+                        }
 
                         KeyCode::Char('p') => {
                             std::env::set_current_dir(&app.dirs[app.sel_dir]).unwrap();

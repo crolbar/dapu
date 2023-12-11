@@ -12,7 +12,7 @@ pub fn render_bars(app: &App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
     }
 }
 
-fn render_top_bar_git(app: &App, frame: &mut Frame, main_layout: &Rc<[Rect]>, repo: Repository) {
+fn render_top_bar_git(_app: &App, frame: &mut Frame, main_layout: &Rc<[Rect]>, repo: Repository) {
     let time = format!("{}", chrono::Local::now().format("%Y-%m-%d %I:%M:%S %p"));
 
     let mut constraints = vec![
@@ -48,9 +48,6 @@ fn render_top_bar_git(app: &App, frame: &mut Frame, main_layout: &Rc<[Rect]>, re
             let is_up_to_date = {
                 let head = repo.head().unwrap();
                 let branch = head.shorthand().unwrap();
-
-                std::env::set_current_dir(&app.dirs[app.sel_dir]).unwrap();
-                std::process::Command::new("git").arg("fetch").spawn().unwrap();
 
                 let local_branch = repo.find_branch(
                     &branch,
