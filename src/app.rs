@@ -26,6 +26,8 @@ pub struct App {
     pub dirs: Vec<PathBuf>,
     pub sel_dir: usize,
     pub preview_conts_dirs: Vec<PathBuf>,
+    pub preview_scroll: (u16, u16),
+    pub preview_file_conts: String,
     pub sel_prev_conts_dir: usize,
     pub sel_window: CurrentWindow,
     pub preview_type: PreviewType,
@@ -124,6 +126,18 @@ impl App {
 
 
     } 
+
+    pub fn read_todo_readme(&mut self) {
+        if self.preview_type != PreviewType::Contents {
+            let string = if self.preview_type == PreviewType::TODO { "TODO" } else { "README" };
+
+            if let Ok(read_dir) = &mut std::fs::read_dir(&self.dirs[self.sel_dir]) {
+                if let Some(file) = read_dir.find(|f| f.as_ref().unwrap().file_name().to_str().unwrap().contains(string)) {
+                    self.preview_file_conts = std::fs::read_to_string(file.unwrap().path()).unwrap();
+                } else {self.preview_file_conts.clear()}
+            }
+        }
+    }
 
     pub fn update_prev_dirs(&mut self) {
         match self.dirs[self.sel_dir].canonicalize() {

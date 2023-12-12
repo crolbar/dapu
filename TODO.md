@@ -13,11 +13,13 @@
 
 - [ ] fix scrolling in left main 
 - [ ] fix scrolling in left dialog 
-- [ ] fix scrolling in right contennts 
-- [ ] fix scrolling in right readme/todo 
-- [ ] search trough dirs
-- [ ] save to config only needed fields
+- [x] fix scrolling in right contennts 
+- [x] fix scrolling in right readme/todo 
 
+- [ ] search trough dirs
+- [ ] search trough dialog box dirs
+
+- [ ] save to config only needed fields
 - [ ] better way of doing aliases to switch working dir ?
 
 - [x] fix crash when dir in dapu was moved in the fs

@@ -22,11 +22,17 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
             KeyCode::Char('o') => app.only_output_path = !app.only_output_path,
 
             KeyCode::Char('c') => {
+                app.preview_type = PreviewType::Contents;
                 app.update_prev_dirs();
-                app.preview_type = PreviewType::Contents
             },
-            KeyCode::Char('t') => app.preview_type = PreviewType::TODO,
-            KeyCode::Char('r') => app.preview_type = PreviewType::README,
+            KeyCode::Char('t') => {
+                app.preview_type = PreviewType::TODO;
+                app.read_todo_readme();
+            },
+            KeyCode::Char('r') => {
+                app.preview_type = PreviewType::README;
+                app.read_todo_readme();
+            },
 
 
             KeyCode::Enter => {
@@ -127,8 +133,8 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                 }
 
 
-                // binds for preview window / right
-                if let CurrentWindow::Right = app.sel_window {
+                // binds for preview contents / right
+                if app.sel_window  == CurrentWindow::Right && app.preview_type == PreviewType::Contents {
                     match key.code {
                         KeyCode::Char('j') | KeyCode::Down => {
                             app.sel_prev_conts_dir = (app.sel_prev_conts_dir + 1) % app.preview_conts_dirs.len()
@@ -150,6 +156,29 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                     }
                 }
 
+                // binds for preview readme/todo / right
+                if app.sel_window == CurrentWindow::Right && (app.preview_type == PreviewType::TODO || app.preview_type == PreviewType::README) {
+                    let num =
+                    match key.modifiers == KeyModifiers::SHIFT {
+                        true => 5,
+                        false => 1,
+                    };
+                    match key.code {
+                        KeyCode::Char('H') | KeyCode::Left
+                            => app.preview_scroll.1 = app.preview_scroll.1.saturating_sub(num),
+                        KeyCode::Char('j') | KeyCode::Char('J') | KeyCode::Down
+                            => app.preview_scroll.0 += num,
+                        KeyCode::Char('k') | KeyCode::Char('K') | KeyCode::Up
+                            => app.preview_scroll.0 = app.preview_scroll.0.saturating_sub(num),
+                        KeyCode::Char('l') | KeyCode::Char('L') | KeyCode::Right
+                            => app.preview_scroll.1 += num,
+                        KeyCode::Char('h') 
+                            => app.sel_window = CurrentWindow::Left,
+                        
+                        _ => ()
+                    }
+                }
+
                 // binds for left / main window
                 if let CurrentWindow::Left = app.sel_window {
                     match key.code {
@@ -157,6 +186,8 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                             app.sel_dir = (app.sel_dir + 1) % app.dirs.len();
 
                             app.status_txt.clear();
+
+                            app.read_todo_readme();
                             app.update_prev_dirs();
                         }
 
@@ -167,10 +198,16 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                             };
 
                             app.status_txt.clear();
+
+                            app.read_todo_readme();
                             app.update_prev_dirs();
                         }
 
-                        KeyCode::Char('l') | KeyCode::Right => app.sel_window = CurrentWindow::Right,
+                        KeyCode::Char('l') | KeyCode::Right => {
+                            if !app.preview_file_conts.is_empty() || app.preview_type == PreviewType::Contents {
+                                app.sel_window = CurrentWindow::Right
+                            }
+                        },
 
                         KeyCode::Char('f') => {
                             std::env::set_current_dir(&app.dirs[app.sel_dir]).unwrap();

@@ -3,109 +3,108 @@ use ratatui::{prelude::*, widgets::*};
 use crate::app::{App, PreviewType, CurrentWindow};
 
 pub fn render_right(app: &App, frame: &mut Frame, mid_layout: &Rc<[Rect]>) {
-    let app_dirs = app.dirs.clone();
-    let sel_dir_path = app_dirs[app.sel_dir].to_str().unwrap();
-
     match app.preview_type {
         PreviewType::Contents => render_preview_contents(app, mid_layout, frame),
-        PreviewType::README => render_preview_readme(sel_dir_path, mid_layout, frame),
-        PreviewType::TODO => render_preview_todo(sel_dir_path, mid_layout, frame),
+        PreviewType::README | PreviewType::TODO => render_preview_readme_todo(app, mid_layout, frame),
     }
 }
 
 fn render_preview_contents(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
     if !app.preview_conts_dirs.is_empty() {
-        let mut constraints = vec![];
-        for _ in 0..app.preview_conts_dirs.len() {
-            constraints.push(Constraint::Min(1))
-        }
-        
-        // fill the empty space
-        constraints.push(Constraint::Percentage(100));
 
         let mid_right_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(constraints)
+            .constraints([Constraint::Percentage(100)])
             .margin(1)
             .split(mid_layout[1]);
 
+        let mut lines= vec![];
 
         for (i, file_path) in app.preview_conts_dirs.iter().enumerate() {
-            let mut file_paragrapth = 
-                format_file_p(
-                    file_path.file_name().unwrap().to_str().unwrap().to_string(),
-                    &file_path
-                );
-            if app.sel_window == CurrentWindow::Right && app.sel_prev_conts_dir == i {
-                file_paragrapth = file_paragrapth.on_red();
-            }
-
-            frame.render_widget(
-                file_paragrapth,
-                mid_right_layout[i]
-            )
+            lines.push(
+                Line::from(
+                    if app.sel_window == CurrentWindow::Right && app.sel_prev_conts_dir == i {
+                        format_file_name(
+                            file_path.file_name().unwrap().to_str().unwrap().to_string(),
+                            &file_path
+                        ).on_red()
+                    } else {
+                        format_file_name(
+                            file_path.file_name().unwrap().to_str().unwrap().to_string(),
+                            &file_path
+                        )
+                    }
+                )
+            );
         }
+
+        let y = {
+            if lines.len() as u16 > mid_right_layout[0].height {
+                if app.sel_prev_conts_dir >= lines.len() - 5 { // if there are 5 row left to the bottom stop scrolling
+                     // instead of adding 5 rows to the bottom add the rows remaining to the bottom
+                    (app.sel_prev_conts_dir + (lines.len() - app.sel_prev_conts_dir)) as u16 - mid_right_layout[0].height
+                } else if app.sel_prev_conts_dir as u16 > mid_right_layout[0].height - 6 {  // if there are 5 rows left to the bottom of the visible rows start scrolling 
+                    // count of rows bellow the visible rows
+                    app.sel_prev_conts_dir as u16 + 6 - mid_right_layout[0].height          // incrementing by one for each row bellow the bottom of the visible rows
+                } else {0}
+            } else {0}
+        };
+
+        frame.render_widget(
+            Paragraph::new(lines).scroll((y, 0)),
+            mid_right_layout[0]
+        )
     }
 }
 
-fn render_preview_readme(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
-    if let Ok(read_dir) = &mut std::fs::read_dir(sel_dir_path) {
-        if let Some(readme) = read_dir.find(|f| f.as_ref().unwrap().file_name().to_str().unwrap().contains("README")) {
-            frame.render_widget(
-                Paragraph::new(std::fs::read_to_string(readme.unwrap().path()).unwrap()),
-                Layout::default().constraints([Constraint::Percentage(100)]).margin(1).split(mid_layout[1])[0]
-            )
-        }
+fn render_preview_readme_todo(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
+    let parag = 
+        if app.sel_window == CurrentWindow::Right {
+            Paragraph::new(app.preview_file_conts.to_string()).scroll(app.preview_scroll)
+                .block(Block::default().borders(Borders::BOTTOM).border_style(Style::default().red()))
+        } else {
+            Paragraph::new(app.preview_file_conts.to_string()).scroll(app.preview_scroll)
+        };
 
-    }
+    frame.render_widget(
+        parag,
+        Layout::default().constraints([Constraint::Percentage(100)]).margin(1).split(mid_layout[1])[0]
+    );
 }
 
-fn render_preview_todo(sel_dir_path: &str, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
-    if let Ok(read_dir) = &mut std::fs::read_dir(sel_dir_path) {
-        if let Some(todo) = read_dir.find(|f| f.as_ref().unwrap().file_name().to_str().unwrap().contains("TODO")) {
-            frame.render_widget(
-                Paragraph::new(std::fs::read_to_string(todo.unwrap().path()).unwrap()),
-                Layout::default().constraints([Constraint::Percentage(100)]).margin(1).split(mid_layout[1])[0]
-            )
-        }
-    }
-
-}
-
-
-
-fn format_file_p(file_name: String, file_path: &PathBuf) -> Paragraph {
+fn format_file_name(file_name: String, file_path: &PathBuf) -> Span<'_> {
     if file_name.contains("git") {
-        Paragraph::new(format!(" {}", file_name)).dark_gray()
+        format!(" {}", file_name).dark_gray()
 
     } else if file_name.ends_with(".nix") {
-        Paragraph::new(format!(" {}", file_name)).blue()
+        format!(" {}", file_name).blue()
 
     } else if file_name.contains("src") {
-        Paragraph::new(format!(" {}", file_name)).green()
+        format!(" {}", file_name).green()
 
     } else if file_name.ends_with(".lock") {
-        Paragraph::new(format!(" {}", file_name)).white()
+        format!(" {}", file_name).white()
 
     } else if file_name.ends_with(".toml") {
-        Paragraph::new(format!(" {}", file_name)).white()
+        format!(" {}", file_name).white()
 
     } else if file_name.ends_with("LICENSE") {
-        Paragraph::new(format!(" {}", file_name)).yellow()
+        format!(" {}", file_name).yellow()
 
     } else if file_name.ends_with("TODO.md") {
-        Paragraph::new(format!(" {}", file_name)).green()
+        format!(" {}", file_name).green()
 
     } else if file_name.ends_with(".md") {
-        Paragraph::new(format!(" {}", file_name)).white()
+        format!(" {}", file_name).white()
 
     } else if file_name.ends_with(".sh") {
-        Paragraph::new(format!(" {}", file_name)).green()
+        format!(" {}", file_name).green()
 
     } else if file_path.is_dir() {
-        Paragraph::new(format!(" {}", file_name)).light_blue()
+        format!(" {}", file_name).light_blue()
 
     } else {
-        Paragraph::new(file_name)
+        file_name.into()
     }
+
 }
