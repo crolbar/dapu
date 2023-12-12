@@ -1,5 +1,11 @@
-[tasks.inst]
+[tasks.nix]
 script = [
-  "cargo build",
-  "cp target/debug/dapu ~/bin"
+    "cargo build",
+    "cp target/debug/dapu ~/bin"
+]
+
+[tasks.arch]
+script = [
+    "cargo build",
+    "sudo cp target/debug/dapu /bin"
 ]

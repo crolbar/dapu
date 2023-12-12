@@ -16,11 +16,13 @@ pub enum CurrentWindow {
     #[default]
     Left,
     Right,
+    Dialog,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct App {
     pub exit: bool,
+    pub default_editor: String,
     pub dirs: Vec<PathBuf>,
     pub sel_dir: usize,
     pub preview_conts_dirs: Vec<PathBuf>,
@@ -29,8 +31,77 @@ pub struct App {
     pub preview_type: PreviewType,
     pub only_output_path: bool,
     pub custom_cmd: String,
-    pub git_pull_out: String,
+    pub status_txt: String,
     pub undo_vec: Vec<(PathBuf, usize)>,
+    pub dialogbox: DialogBox,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct DialogBox {
+    pub dirs: Vec<PathBuf>,
+    pub sel_dir: usize,
+    pub preview_dirs: Vec<PathBuf>,
+    pub back_dirs: Vec<PathBuf>,
+}
+
+impl DialogBox {
+    pub fn go_back_dir(&mut self) {
+        if !self.back_dirs.is_empty() {
+            self.dirs = std::fs::read_dir(self.back_dirs.pop().unwrap()).unwrap()
+                .map(|f| f.unwrap().path())
+                .filter(|f| f.is_dir())
+                .collect();
+        }
+    }
+    
+    pub fn go_forward_dir(&mut self) {
+        if has_subdirectories(&self.dirs[self.sel_dir]) {
+            self.back_dirs.push(
+                self.dirs[self.sel_dir]
+                .parent().unwrap()
+                .to_path_buf()
+            );
+
+            self.dirs = std::fs::read_dir(&self.dirs[self.sel_dir]).unwrap()
+                .map(|f| f.unwrap().path())
+                .filter(|f| f.is_dir())
+                .collect();
+
+        }
+    }
+    
+    pub fn open_home_dir(&mut self) {
+        if self.dirs.is_empty() {
+            self.dirs = std::fs::read_dir(dirs::home_dir().unwrap()).unwrap()
+                .map(|f| f.unwrap().path())
+                .filter(|f| f.is_dir())
+                .collect();
+        }
+    }
+
+    pub fn update_prev_dirs(&mut self) {
+        if self.sel_dir > self.dirs.len().saturating_sub(1) {
+            self.sel_dir = self.dirs.len().saturating_sub(1)
+        }
+
+        match self.dirs[self.sel_dir].canonicalize() {
+            Ok(full_path) => {
+                if let Ok(read_dir) = std::fs::read_dir(full_path.to_str().unwrap()) {
+                    self.preview_dirs= 
+                        read_dir.map(|f| 
+                            f.unwrap_or_else(|_| {
+                                exit_with_err_msg("No permissions to read file in directory or file dosnt exist");
+                                unreachable!()
+                            }).path()
+                        ).collect();
+                }
+
+            } 
+            Err(_) => {
+                self.preview_dirs.clear();
+            }
+        }
+    }
 }
 
 impl App {
@@ -55,19 +126,28 @@ impl App {
     } 
 
     pub fn update_prev_dirs(&mut self) {
-        if let Ok(read_dir) = std::fs::read_dir(self.dirs[self.sel_dir].canonicalize().unwrap().to_str().unwrap()) {
-            self.preview_conts_dirs = 
-                read_dir.map(|f| 
-                    f.unwrap_or_else(|_| {
-                        exit_with_err_msg("No permissions to read file in directory or file dosnt exist");
-                        unreachable!()
-                    }).path()
-                ).collect();
+        match self.dirs[self.sel_dir].canonicalize() {
+            Ok(full_path) => {
+                if let Ok(read_dir) = std::fs::read_dir(full_path.to_str().unwrap()) {
+                    self.preview_conts_dirs = 
+                        read_dir.map(|f| 
+                            f.unwrap_or_else(|_| {
+                                exit_with_err_msg("No permissions to read file in directory or file dosnt exist");
+                                unreachable!()
+                            }).path()
+                        ).collect();
 
-            if self.sel_prev_conts_dir > self.preview_conts_dirs.len() - 1 {
-                self.sel_prev_conts_dir = self.preview_conts_dirs.len() - 1
+                    if self.sel_prev_conts_dir > self.preview_conts_dirs.len().saturating_sub(1)  {
+                        self.sel_prev_conts_dir = self.preview_conts_dirs.len() - 1
+                    }
+                }
+            } 
+            Err(_) => {
+                self.preview_conts_dirs.clear();
+                self.status_txt = String::from("Path doesn't exist!");
             }
         }
+        
     }
 
     pub fn save_to_conf(&self) {
@@ -132,7 +212,7 @@ impl App {
                             let dir_full_path = PathBuf::from(add_dir).canonicalize().unwrap();
                             Self {
                                 dirs: vec![PathBuf::from(dir_full_path)],
-                                only_output_path: true, // REMOVE!!!!!
+                                default_editor: String::from("nvim"),
                                 ..Default::default()
                             }
                         }
@@ -161,7 +241,26 @@ fn check_for_errs(app: App) -> App {
     }
     if app.sel_dir > app.dirs.len() - 1 { app.sel_dir = 0 };
     if app.exit { app.exit = false }
-    app.git_pull_out.clear();
+    app.status_txt.clear();
+    app.dialogbox.dirs.clear();
+    app.dialogbox.back_dirs.clear();
+    if app.sel_window == CurrentWindow::Dialog {
+        app.sel_window = CurrentWindow::Left
+    }
 
     app
+}
+
+
+fn has_subdirectories(path: &PathBuf) -> bool {
+    if let Ok(files) = std::fs::read_dir(path) {
+        for f in files {
+            if let Ok(f) = f {
+                if f.file_type().map_or(false, |ft| ft.is_dir()) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
 }

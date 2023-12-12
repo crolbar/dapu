@@ -187,7 +187,7 @@ fn render_bottom_bar(app: &App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
         .split(main_layout[2]);
 
     frame.render_widget(
-        Paragraph::new(app.git_pull_out.clone()),
+        Paragraph::new(app.status_txt.clone()),
         bottom_bar_layout[0]
     );
 

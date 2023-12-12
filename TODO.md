@@ -5,13 +5,22 @@
 - [x] switch from open in editor and output path with bind 
 - [x] display preview mode on bars
 
-- [ ] dialog box to add folders (starts in home folder) ?
+- [x] dialog box to add folders (starts in home folder) ?
 - [x] bind to remove sel_dir
 - [x] bind to undo remove sel_dir
 - [x] git pull bind
 - [x] status if the repo is up to date
 
+- [ ] fix scrolling in left main 
+- [ ] fix scrolling in left dialog 
+- [ ] fix scrolling in right contennts 
+- [ ] fix scrolling in right readme/todo 
+- [ ] search trough dirs
+- [ ] save to config only needed fields
+
 - [ ] better way of doing aliases to switch working dir ?
+
+- [x] fix crash when dir in dapu was moved in the fs
 
 - [x] customize bars  (clock / git of sel_dir) ?
 - [ ] syntax highlighting on TODO/README files in preview ?

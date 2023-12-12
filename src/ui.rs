@@ -1,10 +1,11 @@
 pub use ratatui::prelude::*;
-use crate::app::App;
+use crate::app::{App, CurrentWindow};
 
 mod right;
 mod left;
 mod bars;
 mod main;
+mod dialog_box;
 
 pub fn render(app: &mut App, frame: &mut Frame) {
 
@@ -31,4 +32,8 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     }
     main::render_main(app, frame, &mid_layout);
     bars::render_bars(app, frame, &main_layout);
+
+    if app.sel_window == CurrentWindow::Dialog {
+        dialog_box::render_dialog(app, frame)
+    }
 }
