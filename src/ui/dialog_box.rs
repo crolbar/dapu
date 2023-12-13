@@ -23,7 +23,6 @@ pub fn render_dialog(app: &App, frame: &mut Frame) {
 
     render_left(app, frame, main_layout[0]);
     render_right(app, frame, main_layout[1]);
-
 }
 
 fn render_left(app: &App, frame: &mut Frame, left_rect: Rect) {
@@ -36,14 +35,19 @@ fn render_left(app: &App, frame: &mut Frame, left_rect: Rect) {
     let lines: Vec<Line> = app
         .dialogbox.dirs
         .iter().enumerate().map(|(i, d)|{
-            let file_name = d.file_name().unwrap().to_str().unwrap();
+            let span = 
+                if i == app.dialogbox.sel_dir {
+                    d.file_name().unwrap().to_str().unwrap().on_red()
+                } else {
+                    Span::from(d.file_name().unwrap().to_str().unwrap())
+                };
 
-            if i == app.dialogbox.sel_dir {
-                Line::from(file_name.on_red())
-            } else {
-                Line::from(file_name)
+            if app.dirs.contains(&d.canonicalize().unwrap()) {
+                return Line::from(vec![span, " ".green()])
             }
-        }).collect();
+
+            Line::from(span)
+    }).collect();
 
     let y = {
         if lines.len() as u16 > left_layout[0].height {
@@ -72,11 +76,11 @@ fn render_right(app: &App, frame: &mut Frame, right_rect: Rect) {
     frame.render_widget(
         Paragraph::new(
             app.dialogbox.preview_dirs
-            .iter().map(|d| 
-                        Line::from(d.file_name().unwrap().to_str().unwrap())
-                       ).collect::<Vec<Line>>()
-            ),
-            left_layout[0]
+                .iter().map(|d| 
+                    Line::from(d.file_name().unwrap().to_str().unwrap())
+                ).collect::<Vec<Line>>()
+        ),
+        left_layout[0]
     )
 }
 
