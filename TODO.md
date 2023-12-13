@@ -11,8 +11,8 @@
 - [x] git pull bind
 - [x] status if the repo is up to date
 
-- [ ] fix scrolling in left main 
-- [ ] fix scrolling in left dialog 
+- [x] fix scrolling in left main 
+- [x] fix scrolling in left dialog 
 - [x] fix scrolling in right contennts 
 - [x] fix scrolling in right readme/todo 
 

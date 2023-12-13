@@ -157,7 +157,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                 }
 
                 // binds for preview readme/todo / right
-                if app.sel_window == CurrentWindow::Right && (app.preview_type == PreviewType::TODO || app.preview_type == PreviewType::README) {
+                if app.sel_window == CurrentWindow::Right && app.preview_type != PreviewType::Contents {
                     let num =
                     match key.modifiers == KeyModifiers::SHIFT {
                         true => 5,
@@ -172,6 +172,8 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                             => app.preview_scroll.0 = app.preview_scroll.0.saturating_sub(num),
                         KeyCode::Char('l') | KeyCode::Char('L') | KeyCode::Right
                             => app.preview_scroll.1 += num,
+                        KeyCode::Char('g') => app.preview_scroll = (0,0),
+                        KeyCode::Char('G') => app.preview_scroll = (app.preview_file_conts.matches("\n").count() as u16, 0),
                         KeyCode::Char('h') 
                             => app.sel_window = CurrentWindow::Left,
                         

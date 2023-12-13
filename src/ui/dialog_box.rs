@@ -27,54 +27,57 @@ pub fn render_dialog(app: &App, frame: &mut Frame) {
 }
 
 fn render_left(app: &App, frame: &mut Frame, left_rect: Rect) {
-    let mut constraints = vec![];
-
-    for _ in 0..app.dialogbox.dirs.len() {
-        constraints.push(Constraint::Min(1));
-    }
-    constraints.push(Constraint::Percentage(100));
-
     let left_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(constraints)
+        .constraints([Constraint::Percentage(100)])
         .margin(1)
         .split(left_rect);
 
-    for (i, f) in app.dialogbox.dirs.iter().enumerate() {
-        if i == app.dialogbox.sel_dir {
-            frame.render_widget(
-                Paragraph::new(f.file_name().unwrap().to_str().unwrap()).on_red(),
-                left_layout[i]
-            );
-        } else {
-            frame.render_widget(
-                Paragraph::new(f.file_name().unwrap().to_str().unwrap()),
-                left_layout[i]
-            );
-        }
-    }
+    let lines: Vec<Line> = app
+        .dialogbox.dirs
+        .iter().enumerate().map(|(i, d)|{
+            let file_name = d.file_name().unwrap().to_str().unwrap();
+
+            if i == app.dialogbox.sel_dir {
+                Line::from(file_name.on_red())
+            } else {
+                Line::from(file_name)
+            }
+        }).collect();
+
+    let y = {
+        if lines.len() as u16 > left_layout[0].height {
+            if app.dialogbox.sel_dir >= app.dialogbox.dirs.len() - 5 { 
+                (app.dialogbox.sel_dir + (lines.len() - app.dialogbox.sel_dir)) as u16 - left_layout[0].height
+            } else if app.dialogbox.sel_dir as u16 > left_layout[0].height - 6 {  
+                app.dialogbox.sel_dir as u16 + 6 - left_layout[0].height
+            } else {0}
+        } else {0}
+    };
+
+
+    frame.render_widget(
+        Paragraph::new(lines).scroll((y, 0)),
+        left_layout[0]
+    );
 }
 
 fn render_right(app: &App, frame: &mut Frame, right_rect: Rect) {
-    let mut constraints = vec![];
-
-    for _ in 0..app.dialogbox.preview_dirs.len() {
-        constraints.push(Constraint::Min(1));
-    }
-    constraints.push(Constraint::Percentage(100));
-
     let left_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(constraints)
+        .constraints([Constraint::Percentage(100)])
         .margin(1)
         .split(right_rect);
 
-    for (i, f) in app.dialogbox.preview_dirs.iter().enumerate() {
-        frame.render_widget(
-            Paragraph::new(f.file_name().unwrap().to_str().unwrap()),
-            left_layout[i]
-        );
-    }
+    frame.render_widget(
+        Paragraph::new(
+            app.dialogbox.preview_dirs
+            .iter().map(|d| 
+                        Line::from(d.file_name().unwrap().to_str().unwrap())
+                       ).collect::<Vec<Line>>()
+            ),
+            left_layout[0]
+    )
 }
 
 fn create_rect(frame: &mut Frame) -> Rect {

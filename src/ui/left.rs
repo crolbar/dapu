@@ -1,36 +1,44 @@
-use ratatui::{prelude::*, widgets::*, symbols::border};
+use ratatui::{prelude::*, widgets::*};
 use std::rc::Rc;
 use crate::app::App;
 
 pub fn render_left(app: &App, frame: &mut Frame, mid_layout:  &Rc<[Rect]>) {
-
-    let mut constraints = vec![];
-    for _ in 0..app.dirs.len()  {
-        constraints.push(Constraint::Min(3))
-    }
-    constraints.push(Constraint::Percentage(100));
-
     let mid_left_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(constraints).margin(1)
+        .constraints([Constraint::Percentage(100)]).margin(1)
     .split(mid_layout[0]);
 
-    for (i, dir) in app.dirs.iter().enumerate() {
-        if i == app.sel_dir {
-            frame.render_widget(
-                Paragraph::new(dir.file_name().unwrap().to_str().unwrap())
-                .block(Block::default().borders(Borders::ALL).border_set(border::ROUNDED).border_style(Style::default().red())),
-                mid_left_layout[i]
-            );
-        } else {
-            frame.render_widget(
-                Paragraph::new(dir.file_name().unwrap().to_str().unwrap())
-                .block(Block::default().borders(Borders::ALL).border_set(border::ROUNDED).border_style(Style::default().black())),
-                mid_left_layout[i]
-            );
-        }
-    }
+    let lines: Vec<Line> = app.dirs
+        .iter()
+        .enumerate()
+        .flat_map(|(i, dir)| {
+            if i == app.sel_dir {
+                [
+                    Line::from("---------".red()),
+                    Line::from(dir.file_name().unwrap().to_str().unwrap().red()),
+                    Line::from("---------".red()),
+                ]
+            } else {
+                [
+                    Line::from("---------".black()),
+                    Line::from(dir.file_name().unwrap().to_str().unwrap()),
+                    Line::from("---------".black()),
+                ]
+            }
+        }).collect();
 
+    let y = {
+        if lines.len() as u16 > mid_left_layout[0].height {
+            if app.sel_dir >= app.dirs.len() - 2 { 
+                ((app.sel_dir + (app.dirs.len() - app.sel_dir)) as u16 - mid_left_layout[0].height / 3) * 3
+            } else if app.sel_dir as u16 + 3 > (mid_left_layout[0].height / 3) {  
+                (app.sel_dir as u16 + 3 - mid_left_layout[0].height / 3)  * 3         
+            } else {0}
+        } else {0}
+    };
 
-
+    frame.render_widget(
+        Paragraph::new(lines).scroll((y, 0)),
+        mid_left_layout[0]
+    );
 }
