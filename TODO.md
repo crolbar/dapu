@@ -21,7 +21,7 @@
 
 - [x] redo
 
-- [ ] save to config only needed fields
+- [x] save to config only needed fields
 - [ ] better way of doing aliases to switch working dir ?
 
 - [x] fix crash when dir in dapu was moved in the fs

@@ -1,9 +1,8 @@
+use serde::{Serialize, Deserialize};
 use std::path::PathBuf;
 use crate::utils::*;
-use serde::{Serialize, Deserialize};
 
-
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone, PartialEq)]
 pub enum PreviewType {
     #[default]
     Contents,
@@ -11,7 +10,7 @@ pub enum PreviewType {
     README,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Clone)]
+#[derive(Default, PartialEq)]
 pub enum CurrentWindow {
     #[default]
     Left,
@@ -19,7 +18,7 @@ pub enum CurrentWindow {
     Dialog,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Default)]
 pub struct App {
     pub exit: bool,
     pub default_editor: String,
@@ -41,7 +40,18 @@ pub struct App {
 }
 
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Serialize, Deserialize, Default)]
+struct Config {
+    dirs: Vec<PathBuf>,
+    sel_dir: usize,
+    preview_type: PreviewType,
+    default_editor: String,
+    custom_cmd: String,
+    only_output_path: bool,
+}
+
+
+#[derive(Default)]
 pub struct DialogBox {
     pub dirs: Vec<PathBuf>,
     pub sel_dir: usize,
@@ -49,7 +59,7 @@ pub struct DialogBox {
     pub back_dirs: Vec<PathBuf>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Default)]
 pub struct Search {
     pub is_typing: bool, 
     pub txt: String,
@@ -155,8 +165,6 @@ impl App {
                 })
             )
         }
-
-
     } 
 
     pub fn read_todo_readme(&mut self) {
@@ -197,12 +205,6 @@ impl App {
         }
     }
 
-    pub fn save_to_conf(&self) {
-        let config_dir_path = dirs::config_dir().unwrap().join("dapu");
-        let instance = ron::ser::to_string_pretty(self, ron::ser::PrettyConfig::default()).unwrap();
-        std::fs::write(config_dir_path.join("dapu.ron"), instance).unwrap();
-    }
-
     pub fn add_remove_dir(add_dir: Option<String>, remove_dir: Option<String>) {
         let config_dir_path = dirs::config_dir().unwrap().join("dapu");
         let config_file_path = dirs::config_dir().unwrap().join("dapu").join("dapu.ron");
@@ -210,7 +212,7 @@ impl App {
         let instance =
             match std::fs::read_to_string(&config_file_path) {
                 Ok(config_file_contents) => {
-                    let mut instance: App = ron::de::from_str(
+                    let mut instance: Config = ron::de::from_str(
                         &config_file_contents
                     ).unwrap();
 
@@ -218,8 +220,6 @@ impl App {
                         let add_dir_full_path = PathBuf::from(add_dir).canonicalize().unwrap_or_else(|_|{
                             exit_with_err_msg("Path doesn't exits"); unreachable!()});
                         if !add_dir_full_path.is_dir() {exit_with_err_msg("Path not directory")}
-
-
                         match instance.dirs.contains(&add_dir_full_path) {
                             true => exit_with_err_msg("Directory already in dapu"),
                             false => instance.dirs.push(add_dir_full_path)
@@ -239,26 +239,27 @@ impl App {
                                     unreachable!()
                                 }
                             }
-
                         );
                     }
-
                     instance
-
                 }
-                Err(_) => {
-                    std::fs::create_dir_all(&config_dir_path).unwrap();
-                    std::fs::File::create(&config_file_path).unwrap();
 
+                Err(_) => {
                     match (add_dir, remove_dir) {
                         (_, Some(_)) => {
                             println!("Cannot remove dir if there are none added");
                             std::process::exit(0)
                         },
                         (Some(add_dir), _) => {
-                            let dir_full_path = PathBuf::from(add_dir).canonicalize().unwrap();
-                            Self {
-                                dirs: vec![PathBuf::from(dir_full_path)],
+                            let add_dir_full_path = PathBuf::from(add_dir).canonicalize().unwrap_or_else(|_|{
+                                exit_with_err_msg("Path doesn't exits"); unreachable!()});
+                            if !add_dir_full_path.is_dir() {exit_with_err_msg("Path not directory")}
+
+                            std::fs::create_dir_all(&config_dir_path).unwrap();
+                            std::fs::File::create(&config_file_path).unwrap();
+
+                            Config {
+                                dirs: vec![add_dir_full_path],
                                 default_editor: String::from("nvim"),
                                 ..Default::default()
                             }
@@ -269,16 +270,29 @@ impl App {
                 }
             };
 
-
         std::fs::write(config_file_path,
            ron::ser::to_string_pretty(
                &instance,
                ron::ser::PrettyConfig::default()
            ).unwrap()
         ).unwrap();
+    }
 
+    pub fn save_to_conf(&self) {
+        let config_dir_path = dirs::config_dir().unwrap().join("dapu");
+        let instance = Config { 
+            dirs: self.dirs.clone(),
+            sel_dir: self.sel_dir,
+            default_editor: self.default_editor.clone(),
+            custom_cmd: self.custom_cmd.clone(),
+            only_output_path: self.only_output_path,
+            preview_type: self.preview_type.clone(),
+        };
+        let instance = ron::ser::to_string_pretty(&instance, ron::ser::PrettyConfig::default()).unwrap();
+        std::fs::write(config_dir_path.join("dapu.ron"), instance).unwrap();
     }
 }
+
 
 fn has_subdirectories(path: &PathBuf) -> bool {
     if let Ok(files) = std::fs::read_dir(path) {
@@ -293,27 +307,21 @@ fn has_subdirectories(path: &PathBuf) -> bool {
     false
 }
 
-fn check_for_errs(app: App) -> App {
-    let mut app = app;
+fn check_for_errs(conf: Config) -> App {
+    let mut conf = conf;
 
-    if app.dirs.is_empty() {
+    if conf.dirs.is_empty() {
         exit_with_help_msg("Try to add an directory with `dapu -a .` (the '.' beeing the directory)"); unreachable!()
     }
-    if app.sel_dir > app.dirs.len() - 1 { app.sel_dir = 0 };
-    if app.exit { app.exit = false }
-    app.status_txt.clear();
-    app.dialogbox.dirs.clear();
-    app.dialogbox.back_dirs.clear();
-    if app.sel_window == CurrentWindow::Dialog {
-        app.sel_window = CurrentWindow::Left
+    if conf.sel_dir > conf.dirs.len() - 1 { conf.sel_dir = 0 };
+
+    App {
+        dirs: conf.dirs,
+        sel_dir: conf.sel_dir,
+        default_editor: conf.default_editor,
+        custom_cmd: conf.custom_cmd,
+        only_output_path: conf.only_output_path,
+        preview_type: conf.preview_type,
+        ..Default::default()
     }
-    app.seach.is_typing = false;
-    app.seach.txt.clear();
-
-    app.undo_vec.clear();
-    app.redo_vec.clear();
-
-    app
 }
-
-

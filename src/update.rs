@@ -130,7 +130,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                 },
 
 
-                KeyCode::Enter => {
+                KeyCode::Enter | KeyCode::Char(' ') => {
                     enter_fn(key, app);
                     app.save_to_conf();
                 }
@@ -139,13 +139,13 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                     // binds for dialog box 
                     if let CurrentWindow::Dialog = app.sel_window {
                         match key.code {
-                            KeyCode::Char('j') => {
+                            KeyCode::Char('j') | KeyCode::Down => {
                                 app.dialogbox.sel_dir = (app.dialogbox.sel_dir + 1) % app.dialogbox.dirs.len();
 
                                 app.dialogbox.update_prev_dirs();
                             }
 
-                            KeyCode::Char('k') => {
+                            KeyCode::Char('k') | KeyCode::Up => {
                                 app.dialogbox.sel_dir = match app.dialogbox.sel_dir {
                                     0 => app.dialogbox.dirs.len() - 1,
                                     _ => app.dialogbox.sel_dir - 1 
@@ -164,13 +164,13 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 app.dialogbox.update_prev_dirs();
                             },
 
-                            KeyCode::Char('h') => {
+                            KeyCode::Char('h') | KeyCode::Left | KeyCode::Char('H') => {
                                 app.dialogbox.go_back_dir();
                                 app.dialogbox.update_prev_dirs();
                                 app.seach.main_dirs.clear();
                             }
 
-                            KeyCode::Char('l') => {
+                            KeyCode::Char('l') | KeyCode::Right => {
                                 app.dialogbox.go_forward_dir();
                                 app.dialogbox.update_prev_dirs();
                                 app.seach.main_dirs.clear();
@@ -377,10 +377,23 @@ fn enter_fn(key: crossterm::event::KeyEvent, app: &mut App) {
     // if in dialogbox add dir to main dirs vector
     if app.sel_window == CurrentWindow::Dialog {
         app.exit = false;
-        if !app.dirs.contains(path) {
-            app.dirs.push(path.to_path_buf());
-            app.save_to_conf();
+        if key.code == KeyCode::Char(' ') {
+            if let Some(dir) = app.dirs.iter().position(|d| d == &app.dialogbox.dirs[app.dialogbox.sel_dir]) {
+                app.dirs.remove(dir);
+                if app.sel_dir >= app.dirs.len() {
+                    app.sel_dir = app.dirs.len().saturating_sub(1)
+                }
+            } else 
+            if !app.dirs.contains(path) {
+                app.dirs.push(path.to_path_buf());
+                app.save_to_conf();
+            }
+        } else {
+            app.dialogbox.go_forward_dir();
+            app.dialogbox.update_prev_dirs();
+            app.seach.main_dirs.clear();
         }
+
     } else 
 
     // custom command to exec on dir

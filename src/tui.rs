@@ -9,7 +9,6 @@ use crate::ui::render;
 
 pub struct Tui {
     pub term: Terminal<CrosstermBackend<Stderr>>
-
 }
 
 impl Tui {
