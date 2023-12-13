@@ -11,6 +11,6 @@
 - o - changes between open the selected directory with the default editor and output the path of that directory
 - Alt + Enter - executes the custom command on the selected directory (the custom command can be set/changed in the config file)
 
-- c - changes the preview type to contents so the right window will show the contents of the selected directory
-- t - changes the preview type to todo so if that directory has an TODO.md in it it will display the contents of the file
-- r - changes the preview type to readme so if that directory has an README.md in it will display the contents of the readme file
+- C - changes the preview type to contents so the right window will show the contents of the selected directory
+- T - changes the preview type to todo so if that directory has an TODO.md in it it will display the contents of the file
+- R - changes the preview type to readme so if that directory has an README.md in it will display the contents of the readme file

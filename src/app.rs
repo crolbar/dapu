@@ -35,6 +35,7 @@ pub struct App {
     pub custom_cmd: String,
     pub status_txt: String,
     pub undo_vec: Vec<(PathBuf, usize)>,
+    pub redo_vec: Vec<(PathBuf, usize)>,
     pub dialogbox: DialogBox,
     pub seach: Search,
 }
@@ -308,6 +309,9 @@ fn check_for_errs(app: App) -> App {
     }
     app.seach.is_typing = false;
     app.seach.txt.clear();
+
+    app.undo_vec.clear();
+    app.redo_vec.clear();
 
     app
 }

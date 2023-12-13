@@ -116,15 +116,15 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
 
                 KeyCode::Char('o') => app.only_output_path = !app.only_output_path,
 
-                KeyCode::Char('c') => {
+                KeyCode::Char('C') => {
                     app.preview_type = PreviewType::Contents;
                     app.update_prev_dirs();
                 },
-                KeyCode::Char('t') => {
+                KeyCode::Char('T') => {
                     app.preview_type = PreviewType::TODO;
                     app.read_todo_readme();
                 },
-                KeyCode::Char('r') => {
+                KeyCode::Char('R') => {
                     app.preview_type = PreviewType::README;
                     app.read_todo_readme();
                 },
@@ -298,26 +298,43 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                             }
 
                             KeyCode::Char('D') => {
-                                app.undo_vec.push(
-                                    (
-                                        app.dirs.remove(app.sel_dir),
-                                        app.sel_dir
-                                    )
-                                );
-                                if app.sel_dir == app.dirs.len() && app.sel_dir != 0 {
-                                    app.sel_dir -= 1;
+                                if app.dirs.len() != 1 {
+                                    let removed_dir = (app.dirs.remove(app.sel_dir), app.sel_dir);
+
+                                    app.redo_vec.clear();
+
+                                    app.undo_vec.push(removed_dir);
+
+                                    if app.sel_dir == app.dirs.len() && app.sel_dir != 0 {
+                                        app.sel_dir -= 1;
+                                    }
+                                    app.update_prev_dirs();
+                                    //app.save_to_conf();
                                 }
-                                app.update_prev_dirs();
-                                app.save_to_conf();
                             }
 
                             KeyCode::Char('u') => {
-                                if let Some(undo_dir) = app.undo_vec.pop(){
-                                    app.dirs.insert(undo_dir.1, undo_dir.0)
-                                }
-                                app.update_prev_dirs();
-                                app.save_to_conf();
+                                if let Some(undo_dir) = app.undo_vec.pop() {
+                                    app.redo_vec.push(undo_dir.clone());
+
+                                    if undo_dir.1 > app.dirs.len() {
+                                        app.dirs.push(undo_dir.0);
+                                    } else {
+                                        app.dirs.insert(undo_dir.1, undo_dir.0);
+                                    }
+                                    app.update_prev_dirs();
+                                    //app.save_to_conf();
+                                } else { app.status_txt = "Already at oldest change".to_string() }
                             }
+
+                            KeyCode::Char('r') | KeyCode::Char('y') => { if key.modifiers == KeyModifiers::CONTROL {
+                                if let Some(redo_dir) = app.redo_vec.pop() {
+                                    app.undo_vec.push(redo_dir.clone());
+                                    app.dirs.remove(app.dirs.iter().position(|d| d == &redo_dir.0).unwrap());
+                                    app.update_prev_dirs();
+                                    //app.save_to_conf();
+                                } else { app.status_txt = "Already at newest change".to_string() }
+                            }}
 
                             KeyCode::Char('G') => {
                                 app.sel_dir = app.dirs.len() - 1;

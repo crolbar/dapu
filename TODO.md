@@ -19,7 +19,7 @@
 - [x] search trough dirs
 - [x] search trough dialog box dirs
 
-- [ ] redo
+- [x] redo
 
 - [ ] save to config only needed fields
 - [ ] better way of doing aliases to switch working dir ?
