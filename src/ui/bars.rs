@@ -186,8 +186,15 @@ fn render_bottom_bar(app: &App, frame: &mut Frame, main_layout: &Rc<[Rect]>) {
         .horizontal_margin(3)
         .split(main_layout[2]);
 
+    let status_line_txt = 
+        if !app.seach.is_typing {
+            app.status_txt.clone().into()
+        } else {
+            Line::from(vec!["/".green(), app.seach.txt.clone().into()])
+        };
+
     frame.render_widget(
-        Paragraph::new(app.status_txt.clone()),
+        Paragraph::new(status_line_txt),
         bottom_bar_layout[0]
     );
 

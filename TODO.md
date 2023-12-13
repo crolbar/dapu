@@ -16,8 +16,10 @@
 - [x] fix scrolling in right contennts 
 - [x] fix scrolling in right readme/todo 
 
-- [ ] search trough dirs
-- [ ] search trough dialog box dirs
+- [x] search trough dirs
+- [x] search trough dialog box dirs
+
+- [ ] redo
 
 - [ ] save to config only needed fields
 - [ ] better way of doing aliases to switch working dir ?

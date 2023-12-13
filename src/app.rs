@@ -36,7 +36,9 @@ pub struct App {
     pub status_txt: String,
     pub undo_vec: Vec<(PathBuf, usize)>,
     pub dialogbox: DialogBox,
+    pub seach: Search,
 }
+
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct DialogBox {
@@ -44,6 +46,35 @@ pub struct DialogBox {
     pub sel_dir: usize,
     pub preview_dirs: Vec<PathBuf>,
     pub back_dirs: Vec<PathBuf>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct Search {
+    pub is_typing: bool, 
+    pub txt: String,
+    pub main_dirs: Vec<PathBuf>,
+}
+
+impl Search {
+    pub fn seach_from_dirs(&mut self, dirs: &mut Vec<PathBuf>) {
+        if self.main_dirs.is_empty() {
+            self.main_dirs = dirs.clone();
+        }
+        dirs.clear();
+
+        for i in self.main_dirs.clone().iter().filter(|d| d.file_name().unwrap().to_str().unwrap().contains(&self.txt)) {
+            dirs.push(i.to_path_buf())
+        }
+    }
+
+    pub fn exit(&mut self) {
+        self.txt.clear();
+        self.is_typing = false;
+    }
+    pub fn revert_dirs(&mut self, dirs: &mut Vec<PathBuf>) {
+        *dirs = self.main_dirs.clone();
+        self.main_dirs.clear();
+    }
 }
 
 impl DialogBox {
@@ -140,28 +171,29 @@ impl App {
     }
 
     pub fn update_prev_dirs(&mut self) {
-        match self.dirs[self.sel_dir].canonicalize() {
-            Ok(full_path) => {
-                if let Ok(read_dir) = std::fs::read_dir(full_path.to_str().unwrap()) {
-                    self.preview_conts_dirs = 
-                        read_dir.map(|f| 
-                            f.unwrap_or_else(|_| {
-                                exit_with_err_msg("No permissions to read file in directory or file dosnt exist");
-                                unreachable!()
-                            }).path()
-                        ).collect();
+        if let Some(dir) = self.dirs.get(self.sel_dir) {
+            match dir.canonicalize() {
+                Ok(full_path) => {
+                    if let Ok(read_dir) = std::fs::read_dir(full_path.to_str().unwrap()) {
+                        self.preview_conts_dirs = 
+                            read_dir.map(|f| 
+                                         f.unwrap_or_else(|_| {
+                                             exit_with_err_msg("No permissions to read file in directory or file dosnt exist");
+                                             unreachable!()
+                                         }).path()
+                                        ).collect();
 
-                    if self.sel_prev_conts_dir > self.preview_conts_dirs.len().saturating_sub(1)  {
-                        self.sel_prev_conts_dir = self.preview_conts_dirs.len() - 1
+                        if self.sel_prev_conts_dir > self.preview_conts_dirs.len().saturating_sub(1)  {
+                            self.sel_prev_conts_dir = self.preview_conts_dirs.len() - 1
+                        }
                     }
+                } 
+                Err(_) => {
+                    self.preview_conts_dirs.clear();
+                    self.status_txt = String::from("Path doesn't exist!");
                 }
-            } 
-            Err(_) => {
-                self.preview_conts_dirs.clear();
-                self.status_txt = String::from("Path doesn't exist!");
             }
         }
-        
     }
 
     pub fn save_to_conf(&self) {
@@ -247,6 +279,19 @@ impl App {
     }
 }
 
+fn has_subdirectories(path: &PathBuf) -> bool {
+    if let Ok(files) = std::fs::read_dir(path) {
+        for f in files {
+            if let Ok(f) = f {
+                if f.file_type().map_or(false, |ft| ft.is_dir()) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
 fn check_for_errs(app: App) -> App {
     let mut app = app;
 
@@ -261,20 +306,10 @@ fn check_for_errs(app: App) -> App {
     if app.sel_window == CurrentWindow::Dialog {
         app.sel_window = CurrentWindow::Left
     }
+    app.seach.is_typing = false;
+    app.seach.txt.clear();
 
     app
 }
 
 
-fn has_subdirectories(path: &PathBuf) -> bool {
-    if let Ok(files) = std::fs::read_dir(path) {
-        for f in files {
-            if let Ok(f) = f {
-                if f.file_type().map_or(false, |ft| ft.is_dir()) {
-                    return true;
-                }
-            }
-        }
-    }
-    false
-}
