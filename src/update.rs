@@ -200,6 +200,20 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                     _ => app.sel_prev_conts_dir - 1 
                                 }
                             }
+                            KeyCode::Char('{') => {
+                                if app.sel_prev_conts_dir == 0 || app.sel_prev_conts_dir as i32 - 3 < 0 {
+                                    app.sel_prev_conts_dir = app.preview_conts_dirs.len() - 1;
+                                } else {
+                                    app.sel_prev_conts_dir -= 3;
+                                }
+                            }
+                            KeyCode::Char('}') => {
+                                if app.sel_prev_conts_dir + 3 > app.preview_conts_dirs.len() {
+                                    app.sel_prev_conts_dir = 0;
+                                } else {
+                                    app.sel_prev_conts_dir += 3;
+                                }
+                            }
 
                             KeyCode::Char('h') | KeyCode::Left => app.sel_window = CurrentWindow::Left,
 
@@ -331,12 +345,30 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 app.sel_dir = app.dirs.len() - 1;
 
                                 app.update_prev_dirs();
-                            },
+                            }
                             KeyCode::Char('g') => {
                                 app.sel_dir = 0;
 
                                 app.update_prev_dirs();
-                            },
+                            }
+                            KeyCode::Char('{') => {
+                                if app.sel_dir == 0 || app.sel_dir as i32 - 3 < 0 {
+                                    app.sel_dir = app.dirs.len() - 1;
+                                } else {
+                                    app.sel_dir -= 3;
+                                }
+
+                                app.update_prev_dirs();
+                            }
+                            KeyCode::Char('}') => {
+                                if app.sel_dir + 3 > app.dirs.len() {
+                                    app.sel_dir = 0;
+                                } else {
+                                    app.sel_dir += 3;
+                                }
+
+                                app.update_prev_dirs();
+                            }
 
                             KeyCode::Char('/') => {
                                 if app.seach.main_dirs.is_empty(){
@@ -407,15 +439,8 @@ fn enter_fn(key: crossterm::event::KeyEvent, app: &mut App) {
         // normal enter if only path output only path if not open with editor
     } else {
         match app.only_output_path {
-            true => {
-                match path.is_dir() {
-                    true => println!("{}", path.to_str().unwrap()),
-                    false => println!("{}", path.parent().unwrap().to_str().unwrap())
-                }
-            }
-            false => {
-                std::process::Command::new(&app.default_editor).arg(path).status().unwrap();
-            }
+            true => println!("{}", path.to_str().unwrap()),
+            false => { std::process::Command::new(&app.default_editor).arg(path).status().unwrap(); }
         }
     }
 }

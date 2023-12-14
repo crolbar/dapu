@@ -23,7 +23,8 @@
 
 - [x] save to config only needed fields
 - [x] better way of doing aliases to switch working dir ?
-- [ ] different names for dirs with the same name
+- [x] different names for dirs with the same name
+- [ ] combine preview fields in an struct ?
 
 - [x] fix crash when dir in dapu was moved in the fs
 

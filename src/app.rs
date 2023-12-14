@@ -73,9 +73,16 @@ impl Search {
         }
         dirs.clear();
 
-        for i in self.main_dirs.clone().iter().filter(|d| d.file_name().unwrap().to_str().unwrap().contains(&self.txt)) {
-            dirs.push(i.to_path_buf())
-        }
+        self.main_dirs.clone()
+            .iter()
+            .filter(|d|
+                d.file_name().unwrap()
+                    .to_str().unwrap()
+                    .to_lowercase()
+                    .contains(&self.txt)
+            ).for_each(|dir| {
+                dirs.push(dir.to_path_buf())
+            });
     }
 
     pub fn exit(&mut self) {

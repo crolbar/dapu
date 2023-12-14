@@ -12,16 +12,27 @@ pub fn render_left(app: &App, frame: &mut Frame, mid_layout:  &Rc<[Rect]>) {
         .iter()
         .enumerate()
         .flat_map(|(i, dir)| {
+            let name = {
+                match app.dirs
+                    .iter().enumerate()
+                    .find(|(i2, d)| 
+                          d.file_name() == dir.file_name() && i2 != &i
+                    ) 
+                {
+                    Some(_) => format!("{}/{}", dir.parent().unwrap().file_name().unwrap().to_str().unwrap(), dir.file_name().unwrap().to_str().unwrap()),
+                    None => dir.file_name().unwrap().to_str().unwrap().to_string()
+                }
+            };
             if i == app.sel_dir {
                 [
                     Line::from("---------".red()),
-                    Line::from(dir.file_name().unwrap().to_str().unwrap().red()),
+                    Line::from(name.red()),
                     Line::from("---------".red()),
                 ]
             } else {
                 [
                     Line::from("---------".black()),
-                    Line::from(dir.file_name().unwrap().to_str().unwrap()),
+                    Line::from(name),
                     Line::from("---------".black()),
                 ]
             }
