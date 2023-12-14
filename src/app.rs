@@ -149,22 +149,30 @@ impl DialogBox {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(only_path: bool) -> Self {
         let config_dir_path = dirs::config_dir().unwrap().join("dapu");
 
-        if std::fs::read_dir(&config_dir_path).is_err() | std::fs::read(config_dir_path.join("dapu.ron")).is_err() {
-            exit_with_help_msg("Try to add an directory with `dapu -a .` (the '.' beeing the directory)");
-            unreachable!()
-        } else {
-            check_for_errs(
-                ron::de::from_str(
-                    &std::fs::read_to_string(config_dir_path.join("dapu.ron")).unwrap()
-                ).unwrap_or_else(|_| {
-                    exit_with_err_msg("dapu.ron is invalid, try to delete it or edit to make it valid");
-                    unreachable!() 
-                })
-            )
+        let mut instance =
+            if std::fs::read_dir(&config_dir_path).is_err() | std::fs::read(config_dir_path.join("dapu.ron")).is_err() {
+                exit_with_help_msg("Try to add an directory with `dapu -a .` (the '.' beeing the directory)");
+                unreachable!()
+            } else {
+                check_for_errs(
+                    ron::de::from_str(
+                        &std::fs::read_to_string(config_dir_path.join("dapu.ron")).unwrap()
+                    ).unwrap_or_else(|_| {
+                        exit_with_err_msg("dapu.ron is invalid, try to delete it or edit to make it valid");
+                        unreachable!() 
+                    })
+                )
+            };
+
+        instance.update_prev_dirs();
+        if only_path {
+            instance.only_output_path = only_path
         }
+
+        instance
     } 
 
     pub fn read_todo_readme(&mut self) {

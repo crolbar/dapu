@@ -10,4 +10,7 @@ pub struct Comms {
     #[clap(short, long)]
     pub remove: Option<String>,
 
+    /// Output the path of the selected directory
+    #[clap(short, long)]
+    pub only_path: bool
 }

@@ -31,20 +31,6 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
             }
 
             match key.code {
-                KeyCode::Enter => {
-                    if app.sel_window == CurrentWindow::Dialog {
-                        if app.dialogbox.dirs.is_empty() {
-                            app.seach.revert_dirs(&mut app.dialogbox.dirs);
-                        } else {
-                            app.seach.main_dirs.clear();
-                        }
-                        app.seach.exit();
-                    } else {
-                        enter_fn(key, app);
-                        app.seach.revert_dirs(&mut app.dirs);
-                        app.save_to_conf();
-                    };
-                },
                 KeyCode::Backspace => {
                     let dirs = match app.sel_window {
                         CurrentWindow::Dialog => &mut app.dialogbox.dirs,
@@ -71,7 +57,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                         }
                     }
                 },
-                KeyCode::Esc => {
+                KeyCode::Esc | KeyCode::Enter => {
                     if (app.dirs.len() == app.seach.main_dirs.len() || app.dirs.is_empty()) && app.sel_window == CurrentWindow::Left {
                         app.seach.revert_dirs(&mut app.dirs)
                     } 
@@ -132,6 +118,11 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
 
                 KeyCode::Enter | KeyCode::Char(' ') => {
                     enter_fn(key, app);
+
+                    if !app.seach.main_dirs.is_empty() {
+                        app.seach.revert_dirs(&mut app.dirs)
+                    }
+
                     app.save_to_conf();
                 }
 

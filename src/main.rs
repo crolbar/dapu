@@ -15,16 +15,14 @@ use crossterm::event::poll;
 
 fn main() -> Result<()> {
     match clapy::Comms::parse() {
-        Comms { add: None, remove: None } => start_tui()?,
-        Comms {add, remove} => App::add_remove_dir(add, remove)
+        Comms { add: None, remove: None, only_path } => start_tui(only_path)?,
+        Comms { add, remove, .. } => App::add_remove_dir(add, remove)
     }
     Ok(())
 }
 
-fn start_tui() -> Result<()>{
-    let mut app = App::new();
-    app.update_prev_dirs();
-
+fn start_tui(only_path: bool) -> Result<()>{
+    let mut app = App::new(only_path);
     let mut tui = Tui::enter()?;
 
     while !app.exit {
