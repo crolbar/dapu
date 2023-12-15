@@ -24,10 +24,6 @@ pub struct App {
     pub default_editor: String,
     pub dirs: Vec<PathBuf>,
     pub sel_dir: usize,
-    pub preview_conts_dirs: Vec<PathBuf>,
-    pub preview_scroll: (u16, u16),
-    pub preview_file_conts: String,
-    pub sel_prev_conts_dir: usize,
     pub sel_window: CurrentWindow,
     pub preview_type: PreviewType,
     pub only_output_path: bool,
@@ -35,8 +31,17 @@ pub struct App {
     pub status_txt: String,
     pub undo_vec: Vec<(PathBuf, usize)>,
     pub redo_vec: Vec<(PathBuf, usize)>,
+    pub prev: Preview,
     pub dialogbox: DialogBox,
     pub seach: Search,
+}
+
+#[derive(Default)]
+pub struct Preview {
+    pub dirs: Vec<PathBuf>,
+    pub scroll: (u16, u16),
+    pub file_txt: String,
+    pub sel_dir: usize,
 }
 
 
@@ -188,8 +193,8 @@ impl App {
 
             if let Ok(read_dir) = &mut std::fs::read_dir(&self.dirs[self.sel_dir]) {
                 if let Some(file) = read_dir.find(|f| f.as_ref().unwrap().file_name().to_str().unwrap().contains(string)) {
-                    self.preview_file_conts = std::fs::read_to_string(file.unwrap().path()).unwrap();
-                } else {self.preview_file_conts.clear()}
+                    self.prev.file_txt = std::fs::read_to_string(file.unwrap().path()).unwrap();
+                } else {self.prev.file_txt.clear()}
             }
         }
     }
@@ -199,7 +204,7 @@ impl App {
             match dir.canonicalize() {
                 Ok(full_path) => {
                     if let Ok(read_dir) = std::fs::read_dir(full_path.to_str().unwrap()) {
-                        self.preview_conts_dirs = 
+                        self.prev.dirs = 
                             read_dir.map(|f| 
                                          f.unwrap_or_else(|_| {
                                              exit_with_err_msg("No permissions to read file in directory or file dosnt exist");
@@ -207,13 +212,13 @@ impl App {
                                          }).path()
                                         ).collect();
 
-                        if self.sel_prev_conts_dir > self.preview_conts_dirs.len().saturating_sub(1)  {
-                            self.sel_prev_conts_dir = self.preview_conts_dirs.len() - 1
+                        if self.prev.sel_dir > self.prev.dirs.len().saturating_sub(1)  {
+                            self.prev.sel_dir = self.prev.dirs.len() - 1
                         }
                     }
                 } 
                 Err(_) => {
-                    self.preview_conts_dirs.clear();
+                    self.prev.dirs.clear();
                     self.status_txt = String::from("Path doesn't exist!");
                 }
             }

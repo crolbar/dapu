@@ -191,34 +191,34 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                     if app.sel_window  == CurrentWindow::Right && app.preview_type == PreviewType::Contents {
                         match key.code {
                             KeyCode::Char('j') | KeyCode::Down => {
-                                app.sel_prev_conts_dir = (app.sel_prev_conts_dir + 1) % app.preview_conts_dirs.len()
+                                app.prev.sel_dir = (app.prev.sel_dir + 1) % app.prev.dirs.len()
                             }
 
                             KeyCode::Char('k') | KeyCode::Up => {
-                                app.sel_prev_conts_dir = match app.sel_prev_conts_dir {
-                                    0 => app.preview_conts_dirs.len() - 1,
-                                    _ => app.sel_prev_conts_dir - 1 
+                                app.prev.sel_dir = match app.prev.sel_dir {
+                                    0 => app.prev.dirs.len() - 1,
+                                    _ => app.prev.sel_dir - 1 
                                 }
                             }
                             KeyCode::Char('{') => {
-                                if app.sel_prev_conts_dir == 0 || app.sel_prev_conts_dir as i32 - 3 < 0 {
-                                    app.sel_prev_conts_dir = app.preview_conts_dirs.len() - 1;
+                                if app.prev.sel_dir == 0 || app.prev.sel_dir as i32 - 3 < 0 {
+                                    app.prev.sel_dir = app.prev.dirs.len() - 1;
                                 } else {
-                                    app.sel_prev_conts_dir -= 3;
+                                    app.prev.sel_dir -= 3;
                                 }
                             }
                             KeyCode::Char('}') => {
-                                if app.sel_prev_conts_dir + 3 > app.preview_conts_dirs.len() {
-                                    app.sel_prev_conts_dir = 0;
+                                if app.prev.sel_dir + 3 > app.prev.dirs.len() {
+                                    app.prev.sel_dir = 0;
                                 } else {
-                                    app.sel_prev_conts_dir += 3;
+                                    app.prev.sel_dir += 3;
                                 }
                             }
 
                             KeyCode::Char('h') | KeyCode::Left => app.sel_window = CurrentWindow::Left,
 
-                            KeyCode::Char('G') => app.sel_prev_conts_dir = app.preview_conts_dirs.len() - 1,
-                            KeyCode::Char('g') => app.sel_prev_conts_dir = 0,
+                            KeyCode::Char('G') => app.prev.sel_dir = app.prev.dirs.len() - 1,
+                            KeyCode::Char('g') => app.prev.sel_dir = 0,
 
                             _ => ()
                         }
@@ -233,15 +233,15 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                             };
                         match key.code {
                             KeyCode::Char('H') | KeyCode::Left
-                                => app.preview_scroll.1 = app.preview_scroll.1.saturating_sub(num),
+                                => app.prev.scroll.1 = app.prev.scroll.1.saturating_sub(num),
                             KeyCode::Char('j') | KeyCode::Char('J') | KeyCode::Down
-                                => app.preview_scroll.0 += num,
+                                => app.prev.scroll.0 += num,
                             KeyCode::Char('k') | KeyCode::Char('K') | KeyCode::Up
-                                => app.preview_scroll.0 = app.preview_scroll.0.saturating_sub(num),
+                                => app.prev.scroll.0 = app.prev.scroll.0.saturating_sub(num),
                             KeyCode::Char('l') | KeyCode::Char('L') | KeyCode::Right
-                                => app.preview_scroll.1 += num,
-                            KeyCode::Char('g') => app.preview_scroll = (0,0),
-                            KeyCode::Char('G') => app.preview_scroll = (app.preview_file_conts.matches("\n").count() as u16, 0),
+                                => app.prev.scroll.1 += num,
+                            KeyCode::Char('g') => app.prev.scroll = (0,0),
+                            KeyCode::Char('G') => app.prev.scroll = (app.prev.file_txt.matches("\n").count() as u16, 0),
                             KeyCode::Char('h') => app.sel_window = CurrentWindow::Left,
 
                                 _ => ()
@@ -273,7 +273,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                             }
 
                             KeyCode::Char('l') | KeyCode::Right => {
-                                if !app.preview_file_conts.is_empty() || app.preview_type == PreviewType::Contents {
+                                if !app.prev.file_txt.is_empty() || app.preview_type == PreviewType::Contents {
                                     app.sel_window = CurrentWindow::Right
                                 }
                             },
@@ -392,7 +392,7 @@ fn enter_fn(key: crossterm::event::KeyEvent, app: &mut App) {
 
     let path = 
         match app.sel_window {
-            CurrentWindow::Right => &app.preview_conts_dirs[app.sel_prev_conts_dir],
+            CurrentWindow::Right => &app.prev.dirs[app.prev.sel_dir],
             CurrentWindow::Left => &app.dirs[app.sel_dir],
             CurrentWindow::Dialog => &app.dialogbox.dirs[app.dialogbox.sel_dir],
         };

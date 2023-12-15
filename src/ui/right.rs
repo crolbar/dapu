@@ -10,7 +10,7 @@ pub fn render_right(app: &App, frame: &mut Frame, mid_layout: &Rc<[Rect]>) {
 }
 
 fn render_preview_contents(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
-    if !app.preview_conts_dirs.is_empty() {
+    if !app.prev.dirs.is_empty() {
 
         let mid_right_layout = Layout::default()
             .direction(Direction::Vertical)
@@ -20,10 +20,10 @@ fn render_preview_contents(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame
 
         let mut lines= vec![];
 
-        for (i, file_path) in app.preview_conts_dirs.iter().enumerate() {
+        for (i, file_path) in app.prev.dirs.iter().enumerate() {
             lines.push(
                 Line::from(
-                    if app.sel_window == CurrentWindow::Right && app.sel_prev_conts_dir == i {
+                    if app.sel_window == CurrentWindow::Right && app.prev.sel_dir == i {
                         format_file_name(
                             file_path.file_name().unwrap().to_str().unwrap().to_string(),
                             &file_path
@@ -40,12 +40,12 @@ fn render_preview_contents(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame
 
         let y = {
             if lines.len() as u16 > mid_right_layout[0].height {
-                if app.sel_prev_conts_dir >= lines.len() - 5 { // if there are 5 row left to the bottom stop scrolling
+                if app.prev.sel_dir >= lines.len() - 5 { // if there are 5 row left to the bottom stop scrolling
                      // instead of adding 5 rows to the bottom add the rows remaining to the bottom
-                    (app.sel_prev_conts_dir + (lines.len() - app.sel_prev_conts_dir)) as u16 - mid_right_layout[0].height
-                } else if app.sel_prev_conts_dir as u16 > mid_right_layout[0].height - 6 {  // if there are 5 rows left to the bottom of the visible rows start scrolling 
+                    (app.prev.sel_dir + (lines.len() - app.prev.sel_dir)) as u16 - mid_right_layout[0].height
+                } else if app.prev.sel_dir as u16 > mid_right_layout[0].height - 6 {  // if there are 5 rows left to the bottom of the visible rows start scrolling 
                     // count of rows bellow the visible rows
-                    app.sel_prev_conts_dir as u16 + 6 - mid_right_layout[0].height          // incrementing by one for each row bellow the bottom of the visible rows
+                    app.prev.sel_dir as u16 + 6 - mid_right_layout[0].height          // incrementing by one for each row bellow the bottom of the visible rows
                 } else {0}
             } else {0}
         };
@@ -60,10 +60,10 @@ fn render_preview_contents(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame
 fn render_preview_readme_todo(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
     let parag = 
         if app.sel_window == CurrentWindow::Right {
-            Paragraph::new(app.preview_file_conts.to_string()).scroll(app.preview_scroll)
+            Paragraph::new(app.prev.file_txt.to_string()).scroll(app.prev.scroll)
                 .block(Block::default().borders(Borders::BOTTOM).border_style(Style::default().red()))
         } else {
-            Paragraph::new(app.preview_file_conts.to_string()).scroll(app.preview_scroll)
+            Paragraph::new(app.prev.file_txt.to_string()).scroll(app.prev.scroll)
         };
 
     frame.render_widget(
