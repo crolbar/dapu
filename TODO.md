@@ -24,6 +24,8 @@
 - [x] save to config only needed fields
 - [x] better way of doing aliases to switch working dir ?
 - [x] different names for dirs with the same name
+
+- [ ] after entering an dir from search change the sel_dir index to the entered dir
 - [ ] combine preview fields in an struct ?
 
 - [x] fix crash when dir in dapu was moved in the fs
