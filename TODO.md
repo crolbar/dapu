@@ -24,7 +24,9 @@
 - [x] save to config only needed fields
 - [x] better way of doing aliases to switch working dir ?
 - [x] different names for dirs with the same name
+
 - [ ] combine preview fields in an struct ?
+- [ ] more methods for app (eg. checking which screen is focused)
 
 - [x] fix crash when dir in dapu was moved in the fs
 
