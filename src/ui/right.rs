@@ -1,6 +1,6 @@
 use std::{rc::Rc, path::PathBuf};
 use ratatui::{prelude::*, widgets::*};
-use crate::app::{App, PreviewType, CurrentWindow};
+use crate::app::{App, PreviewType};
 
 pub fn render_right(app: &App, frame: &mut Frame, mid_layout: &Rc<[Rect]>) {
     match app.preview_type {
@@ -23,7 +23,7 @@ fn render_preview_contents(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame
         for (i, file_path) in app.prev.dirs.iter().enumerate() {
             lines.push(
                 Line::from(
-                    if app.sel_window == CurrentWindow::Right && app.prev.sel_dir == i {
+                    if app.is_focused_right() && app.prev.sel_dir == i {
                         format_file_name(
                             file_path.file_name().unwrap().to_str().unwrap().to_string(),
                             &file_path
@@ -59,7 +59,7 @@ fn render_preview_contents(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame
 
 fn render_preview_readme_todo(app: &App, mid_layout: &Rc<[Rect]>, frame: &mut Frame) {
     let parag = 
-        if app.sel_window == CurrentWindow::Right {
+        if app.is_focused_right() {
             Paragraph::new(app.prev.file_txt.to_string()).scroll(app.prev.scroll)
                 .block(Block::default().borders(Borders::BOTTOM).border_style(Style::default().red()))
         } else {

@@ -25,9 +25,9 @@
 - [x] better way of doing aliases to switch working dir ?
 - [x] different names for dirs with the same name
 
-- [ ] after entering an dir from search change the sel_dir that beeing saved to config index to the entered dir
+- [x] after entering an dir from search change the sel_dir that beeing saved to config index to the entered dir
 - [x] combine preview fields in an struct ?
-- [ ] more methods for app (eg. checking which screen is focused) 
+- [x] more methods for app (eg. checking which screen is focused) 
 
 - [x] fix crash when dir in dapu was moved in the fs
 

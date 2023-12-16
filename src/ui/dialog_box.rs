@@ -94,14 +94,13 @@ fn create_rect(frame: &mut Frame) -> Rect {
         ])
         .split(frame.size());
 
-    let ver_split = Layout::default()
+    Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Percentage(15),
             Constraint::Percentage(70),
             Constraint::Percentage(15),
         ])
-        .split(hor_split[1]);
-
-    ver_split[1]
+        .split(hor_split[1])
+    [1]
 }

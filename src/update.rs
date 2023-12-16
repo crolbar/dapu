@@ -9,7 +9,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
             if let KeyCode::Char(char) = key.code {
                     app.seach.txt.push(char);
 
-                if app.sel_window == CurrentWindow::Dialog {
+                if app.is_focused_dialog() {
                     app.seach.seach_from_dirs(&mut app.dialogbox.dirs);
 
                     if app.dialogbox.sel_dir >= app.dialogbox.dirs.len() {
@@ -32,16 +32,16 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
 
             match key.code {
                 KeyCode::Backspace => {
-                    let dirs = match app.sel_window {
-                        CurrentWindow::Dialog => &mut app.dialogbox.dirs,
-                        CurrentWindow::Left => &mut app.dirs,
-                        _ => unreachable!()
+                    let dirs = if app.is_focused_left() {
+                        &mut app.dirs
+                    } else {
+                        &mut app.dialogbox.dirs
                     };
 
                     app.seach.txt.pop();
                     app.seach.seach_from_dirs(dirs);
 
-                    if app.sel_window == CurrentWindow::Dialog {
+                    if app.is_focused_dialog() {
                         if app.dialogbox.sel_dir >= app.dialogbox.dirs.len() {
                             app.dialogbox.sel_dir = 0
                         }
@@ -58,18 +58,17 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                     }
                 },
                 KeyCode::Esc | KeyCode::Enter => {
-                    if (app.dirs.len() == app.seach.main_dirs.len() || app.dirs.is_empty()) && app.sel_window == CurrentWindow::Left {
+                    if (app.dirs.len() == app.seach.main_dirs.len() || app.dirs.is_empty()) && app.is_focused_left() {
                         app.seach.revert_dirs(&mut app.dirs)
                     } 
 
-                    if app.sel_window == CurrentWindow::Dialog {
+                    if app.is_focused_dialog() {
                         if app.dialogbox.dirs.is_empty() {
                             app.seach.revert_dirs(&mut app.dialogbox.dirs)
                         } else {
                             app.seach.main_dirs.clear();
                         }
                     }
-
                     app.seach.exit()
                 },
 
@@ -89,13 +88,13 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                 }
                 KeyCode::Char('a') => {
                     if app.seach.main_dirs.is_empty() {
-                        if app.sel_window != CurrentWindow::Dialog {
+                        if !app.is_focused_dialog() {
                             app.dialogbox.open_home_dir();
                             app.dialogbox.update_prev_dirs();
-                            app.sel_window = CurrentWindow::Dialog;
+                            app.set_focus_dialog();
                         } else {
                             app.seach.main_dirs.clear();
-                            app.sel_window = CurrentWindow::Left;
+                            app.set_focus_left()
                         }
                     }
                 },
@@ -119,7 +118,9 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                 KeyCode::Enter | KeyCode::Char(' ') => {
                     enter_fn(key, app);
 
+                    // if the dir was selected from search
                     if !app.seach.main_dirs.is_empty() {
+                        app.seach.set_sel_dir(&mut app.sel_dir, &app.dirs);
                         app.seach.revert_dirs(&mut app.dirs)
                     }
 
@@ -128,7 +129,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
 
                 _ => {
                     // binds for dialog box 
-                    if let CurrentWindow::Dialog = app.sel_window {
+                    if app.is_focused_dialog() {
                         match key.code {
                             KeyCode::Char('j') | KeyCode::Down => {
                                 app.dialogbox.sel_dir = (app.dialogbox.sel_dir + 1) % app.dialogbox.dirs.len();
@@ -188,7 +189,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
 
 
                     // binds for preview contents / right
-                    if app.sel_window  == CurrentWindow::Right && app.preview_type == PreviewType::Contents {
+                    if app.is_focused_right() && app.preview_type == PreviewType::Contents {
                         match key.code {
                             KeyCode::Char('j') | KeyCode::Down => {
                                 app.prev.sel_dir = (app.prev.sel_dir + 1) % app.prev.dirs.len()
@@ -215,7 +216,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 }
                             }
 
-                            KeyCode::Char('h') | KeyCode::Left => app.sel_window = CurrentWindow::Left,
+                            KeyCode::Char('h') | KeyCode::Left => app.set_focus_left(),
 
                             KeyCode::Char('G') => app.prev.sel_dir = app.prev.dirs.len() - 1,
                             KeyCode::Char('g') => app.prev.sel_dir = 0,
@@ -225,7 +226,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                     }
 
                     // binds for preview readme/todo / right
-                    if app.sel_window == CurrentWindow::Right && app.preview_type != PreviewType::Contents {
+                    if app.is_focused_right() && app.preview_type != PreviewType::Contents {
                         let num =
                             match key.modifiers == KeyModifiers::SHIFT {
                                 true => 5,
@@ -242,22 +243,23 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 => app.prev.scroll.1 += num,
                             KeyCode::Char('g') => app.prev.scroll = (0,0),
                             KeyCode::Char('G') => app.prev.scroll = (app.prev.file_txt.matches("\n").count() as u16, 0),
-                            KeyCode::Char('h') => app.sel_window = CurrentWindow::Left,
+                            KeyCode::Char('h') => app.set_focus_left(),
 
                                 _ => ()
                         }
                     }
 
                     // binds for left / main window
-                    if let CurrentWindow::Left = app.sel_window {
+                    if app.is_focused_left() {
                         match key.code {
                             KeyCode::Char('j') | KeyCode::Down => {
                                 app.sel_dir = (app.sel_dir + 1) % app.dirs.len();
 
                                 app.status_txt.clear();
-
-                                app.read_todo_readme();
-                                app.update_prev_dirs();
+                                match app.preview_type {
+                                    PreviewType::Contents => app.update_prev_dirs(),
+                                    PreviewType::TODO | PreviewType::README => app.read_todo_readme()
+                                }
                             }
 
                             KeyCode::Char('k') | KeyCode::Up => {
@@ -267,14 +269,15 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 };
 
                                 app.status_txt.clear();
-
-                                app.read_todo_readme();
-                                app.update_prev_dirs();
+                                match app.preview_type {
+                                    PreviewType::Contents => app.update_prev_dirs(),
+                                    PreviewType::TODO | PreviewType::README => app.read_todo_readme()
+                                }
                             }
 
                             KeyCode::Char('l') | KeyCode::Right => {
-                                if !app.prev.file_txt.is_empty() || app.preview_type == PreviewType::Contents {
-                                    app.sel_window = CurrentWindow::Right
+                                if !app.prev.file_txt.is_empty() || !app.prev.dirs.is_empty() {
+                                    app.set_focus_right()
                                 }
                             },
 
@@ -287,6 +290,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 if crossterm::event::poll(std::time::Duration::from_millis(200))? {
                                     if let Event::Key(key) = event::read()? {
                                         if key.code == KeyCode::Char('p') {
+
                                             std::env::set_current_dir(&app.dirs[app.sel_dir]).unwrap();
                                             let out = std::process::Command::new("git").arg("pull").output().unwrap();
                                             let stdout = out.stdout;
@@ -314,7 +318,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                         app.sel_dir -= 1;
                                     }
                                     app.update_prev_dirs();
-                                    //app.save_to_conf();
+                                    app.save_to_conf();
                                 }
                             }
 
@@ -328,7 +332,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                         app.dirs.insert(undo_dir.1, undo_dir.0);
                                     }
                                     app.update_prev_dirs();
-                                    //app.save_to_conf();
+                                    app.save_to_conf();
                                 } else { app.status_txt = "Already at oldest change".to_string() }
                             }
 
@@ -337,18 +341,16 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                     app.undo_vec.push(redo_dir.clone());
                                     app.dirs.remove(app.dirs.iter().position(|d| d == &redo_dir.0).unwrap());
                                     app.update_prev_dirs();
-                                    //app.save_to_conf();
+                                    app.save_to_conf();
                                 } else { app.status_txt = "Already at newest change".to_string() }
                             }}
 
                             KeyCode::Char('G') => {
                                 app.sel_dir = app.dirs.len() - 1;
-
                                 app.update_prev_dirs();
                             }
                             KeyCode::Char('g') => {
                                 app.sel_dir = 0;
-
                                 app.update_prev_dirs();
                             }
                             KeyCode::Char('{') => {
@@ -398,7 +400,7 @@ fn enter_fn(key: crossterm::event::KeyEvent, app: &mut App) {
         };
 
     // if in dialogbox add dir to main dirs vector
-    if app.sel_window == CurrentWindow::Dialog {
+    if app.is_focused_dialog() {
         app.exit = false;
         if key.code == KeyCode::Char(' ') {
             if let Some(dir) = app.dirs.iter().position(|d| d == &app.dialogbox.dirs[app.dialogbox.sel_dir]) {

@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use std::path::PathBuf;
+use std::{path::PathBuf, usize};
 use crate::utils::*;
 
 #[derive(Serialize, Deserialize, Default, Clone, PartialEq)]
@@ -98,6 +98,10 @@ impl Search {
         *dirs = self.main_dirs.clone();
         self.main_dirs.clear();
     }
+
+    pub fn set_sel_dir(&self, sel_dir: &mut usize, dirs: &Vec<PathBuf>) {
+        *sel_dir = self.main_dirs.iter().position(|path| path == &dirs[*sel_dir]).unwrap()
+    }
 }
 
 impl DialogBox {
@@ -187,9 +191,34 @@ impl App {
         instance
     } 
 
+    pub fn is_focused_right(&self) -> bool {
+        self.sel_window == CurrentWindow::Right
+    }
+    pub fn is_focused_dialog(&self) -> bool {
+        self.sel_window == CurrentWindow::Dialog
+    }
+    pub fn is_focused_left(&self) -> bool {
+        self.sel_window == CurrentWindow::Left
+    }
+    pub fn set_focus_left(&mut self) {
+        self.sel_window = CurrentWindow::Left
+    }
+    pub fn set_focus_right(&mut self) {
+        self.sel_window = CurrentWindow::Right
+    }
+    pub fn set_focus_dialog(&mut self) {
+        self.sel_window = CurrentWindow::Dialog
+    }
+    pub fn is_preview_todo(&self) -> bool {
+        self.preview_type == PreviewType::TODO
+    }
+    pub fn is_preview_contents(&self) -> bool {
+        self.preview_type == PreviewType::Contents
+    }
+
     pub fn read_todo_readme(&mut self) {
-        if self.preview_type != PreviewType::Contents {
-            let string = if self.preview_type == PreviewType::TODO { "TODO" } else { "README" };
+        if !self.is_preview_contents() {
+            let string = if self.is_preview_todo() { "TODO" } else { "README" };
 
             if let Ok(read_dir) = &mut std::fs::read_dir(&self.dirs[self.sel_dir]) {
                 if let Some(file) = read_dir.find(|f| f.as_ref().unwrap().file_name().to_str().unwrap().contains(string)) {
