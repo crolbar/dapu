@@ -30,6 +30,7 @@
 - [x] more methods for app (eg. checking which screen is focused) 
 
 - [x] fix crash when dir in dapu was moved in the fs
+- [ ] fix crashes with git branches
 
 - [x] customize bars  (clock / git of sel_dir) ?
 - [ ] syntax highlighting on TODO/README files in preview ?
