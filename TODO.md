@@ -32,6 +32,8 @@
 - [x] fix crash when dir in dapu was moved in the fs
 - [ ] fix crashes with git branches
 
+- [ ] remove config struct and ignore uneeded fields from app struct
+
 - [x] customize bars  (clock / git of sel_dir) ?
 - [ ] syntax highlighting on TODO/README files in preview ?
 - [ ] binds help on bars ?

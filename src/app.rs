@@ -18,21 +18,30 @@ pub enum CurrentWindow {
     Dialog,
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct App {
-    pub exit: bool,
-    pub default_editor: String,
     pub dirs: Vec<PathBuf>,
     pub sel_dir: usize,
-    pub sel_window: CurrentWindow,
     pub preview_type: PreviewType,
+    pub default_editor: String,
     pub only_output_path: bool,
     pub custom_cmd: String,
+
+    #[serde(skip)]
+    pub exit: bool,
+    #[serde(skip)]
+    pub sel_window: CurrentWindow,
+    #[serde(skip)]
     pub status_txt: String,
+    #[serde(skip)]
     pub undo_vec: Vec<(PathBuf, usize)>,
+    #[serde(skip)]
     pub redo_vec: Vec<(PathBuf, usize)>,
+    #[serde(skip)]
     pub prev: Preview,
+    #[serde(skip)]
     pub dialogbox: DialogBox,
+    #[serde(skip)]
     pub seach: Search,
 }
 
@@ -42,17 +51,6 @@ pub struct Preview {
     pub scroll: (u16, u16),
     pub file_txt: String,
     pub sel_dir: usize,
-}
-
-
-#[derive(Serialize, Deserialize, Default)]
-struct Config {
-    dirs: Vec<PathBuf>,
-    sel_dir: usize,
-    preview_type: PreviewType,
-    default_editor: String,
-    custom_cmd: String,
-    only_output_path: bool,
 }
 
 
@@ -261,7 +259,7 @@ impl App {
         let instance =
             match std::fs::read_to_string(&config_file_path) {
                 Ok(config_file_contents) => {
-                    let mut instance: Config = ron::de::from_str(
+                    let mut instance: App = ron::de::from_str(
                         &config_file_contents
                     ).unwrap();
 
@@ -307,7 +305,7 @@ impl App {
                             std::fs::create_dir_all(&config_dir_path).unwrap();
                             std::fs::File::create(&config_file_path).unwrap();
 
-                            Config {
+                            App {
                                 dirs: vec![add_dir_full_path],
                                 default_editor: String::from("nvim"),
                                 ..Default::default()
@@ -329,15 +327,7 @@ impl App {
 
     pub fn save_to_conf(&self) {
         let config_dir_path = dirs::config_dir().unwrap().join("dapu");
-        let instance = Config { 
-            dirs: self.dirs.clone(),
-            sel_dir: self.sel_dir,
-            default_editor: self.default_editor.clone(),
-            custom_cmd: self.custom_cmd.clone(),
-            only_output_path: self.only_output_path,
-            preview_type: self.preview_type.clone(),
-        };
-        let instance = ron::ser::to_string_pretty(&instance, ron::ser::PrettyConfig::default()).unwrap();
+        let instance = ron::ser::to_string_pretty(self, ron::ser::PrettyConfig::default()).unwrap();
         std::fs::write(config_dir_path.join("dapu.ron"), instance).unwrap();
     }
 }
@@ -356,7 +346,7 @@ fn has_subdirectories(path: &PathBuf) -> bool {
     false
 }
 
-fn check_for_errs(conf: Config) -> App {
+fn check_for_errs(conf: App) -> App {
     let mut conf = conf;
 
     if conf.dirs.is_empty() {
@@ -364,13 +354,5 @@ fn check_for_errs(conf: Config) -> App {
     }
     if conf.sel_dir > conf.dirs.len() - 1 { conf.sel_dir = 0 };
 
-    App {
-        dirs: conf.dirs,
-        sel_dir: conf.sel_dir,
-        default_editor: conf.default_editor,
-        custom_cmd: conf.custom_cmd,
-        only_output_path: conf.only_output_path,
-        preview_type: conf.preview_type,
-        ..Default::default()
-    }
+    conf
 }
