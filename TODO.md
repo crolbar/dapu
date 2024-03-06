@@ -32,6 +32,8 @@
 - [x] fix crash when dir in dapu was moved in the fs
 - [ ] fix crashes with git branches
 
+- [ ] add full path display of current dir
+
 - [ ] remove config struct and ignore uneeded fields from app struct
 
 - [x] customize bars  (clock / git of sel_dir) ?

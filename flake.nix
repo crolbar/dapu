@@ -17,7 +17,6 @@
         devShells.default = mkShell {
           buildInputs = [
             pkg-config
-            openssl
             (rust-bin.stable.latest.default.override {
               extensions = [ "rust-src" ];
             })
