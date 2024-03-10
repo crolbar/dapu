@@ -2,6 +2,7 @@
   inputs = {
     nixpkgs.url      = "github:NixOS/nixpkgs/nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = { self, nixpkgs, rust-overlay, flake-utils, ... }:
@@ -11,12 +12,23 @@
         pkgs = import nixpkgs {
           inherit system overlays;
         };
-      in
-      with pkgs;
+      in with pkgs;
       {
+        defaultPackage = (makeRustPlatform {
+          inherit cargo rustc;
+        }).buildRustPackage {
+            cargoLock.lockFile = ./Cargo.lock;
+            nativeBuildInputs = [ pkg-config ];
+            buildInputs = [ openssl ];
+            version = "0.1";
+            pname = "dapu";
+            src = ./.;
+        };
+
         devShells.default = mkShell {
           buildInputs = [
             pkg-config
+            openssl
             (rust-bin.stable.latest.default.override {
               extensions = [ "rust-src" ];
             })
