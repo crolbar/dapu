@@ -25,6 +25,8 @@ fn start_tui(only_path: bool) -> Result<()>{
     let mut app = App::new(only_path);
     let mut tui = Tui::enter()?;
 
+    app.update_right_pane();
+
     while !app.exit {
         tui.draw(&mut app)?;
         if poll(Duration::from_secs(2))? {

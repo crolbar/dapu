@@ -6,7 +6,7 @@ mod left;
 mod bars;
 mod dialog_box;
 
-pub fn render(app: &mut App, frame: &mut Frame) {
+pub fn render(app: &App, frame: &mut Frame) {
 
     let main_layout = Layout::default()
         .direction(Direction::Vertical)

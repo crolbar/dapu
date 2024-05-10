@@ -25,7 +25,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                         app.sel_dir = 0;
                     }
                     if !app.dirs.is_empty() {
-                        app.update_prev_dirs();
+                        app.update_right_pane()
                     }
                 }
             }
@@ -53,7 +53,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                             app.sel_dir = 0;
                         }
                         if !app.dirs.is_empty() {
-                            app.update_prev_dirs();
+                            app.update_right_pane()
                         }
                     }
                 },
@@ -76,14 +76,16 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
             }
         } else {
 
-        // binds  for all windows exept when typing
+        // binds for all windows exept when typing
             match key.code {
                 KeyCode::Char('q') | KeyCode::Esc => {
                     if app.seach.main_dirs.is_empty() {
                         app.save_to_conf();
                         app.exit = true;
                     } else {
-                        app.seach.revert_dirs(&mut app.dirs)
+                        app.seach.revert_dirs(&mut app.dirs);
+
+                        app.update_right_pane()
                     }
                 }
                 KeyCode::Char('a') => {
@@ -103,15 +105,15 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
 
                 KeyCode::Char('C') => {
                     app.preview_type = PreviewType::Contents;
-                    app.update_prev_dirs();
+                    app.update_right_pane()
                 },
                 KeyCode::Char('T') => {
                     app.preview_type = PreviewType::TODO;
-                    app.read_todo_readme();
+                    app.update_right_pane()
                 },
                 KeyCode::Char('R') => {
                     app.preview_type = PreviewType::README;
-                    app.read_todo_readme();
+                    app.update_right_pane()
                 },
 
 
@@ -256,10 +258,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 app.sel_dir = (app.sel_dir + 1) % app.dirs.len();
 
                                 app.status_txt.clear();
-                                match app.preview_type {
-                                    PreviewType::Contents => app.update_prev_dirs(),
-                                    PreviewType::TODO | PreviewType::README => app.read_todo_readme()
-                                }
+                                app.update_right_pane()
                             }
 
                             KeyCode::Char('k') | KeyCode::Up => {
@@ -269,10 +268,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 };
 
                                 app.status_txt.clear();
-                                match app.preview_type {
-                                    PreviewType::Contents => app.update_prev_dirs(),
-                                    PreviewType::TODO | PreviewType::README => app.read_todo_readme()
-                                }
+                                app.update_right_pane()
                             }
 
                             KeyCode::Char('l') | KeyCode::Right => {
@@ -300,7 +296,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                                 String::from_utf8(stdout).unwrap().replace("\n", " ") 
                                                 + &String::from_utf8(stderr).unwrap().replace("\n", " ");
 
-                                            app.update_prev_dirs();
+                                            app.update_right_pane()
                                         }
                                     }
                                 }
@@ -317,7 +313,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                     if app.sel_dir == app.dirs.len() && app.sel_dir != 0 {
                                         app.sel_dir -= 1;
                                     }
-                                    app.update_prev_dirs();
+                                    app.update_right_pane();
                                     app.save_to_conf();
                                 }
                             }
@@ -331,7 +327,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                     } else {
                                         app.dirs.insert(undo_dir.1, undo_dir.0);
                                     }
-                                    app.update_prev_dirs();
+                                    app.update_right_pane();
                                     app.save_to_conf();
                                 } else { app.status_txt = "Already at oldest change".to_string() }
                             }
@@ -340,18 +336,18 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 if let Some(redo_dir) = app.redo_vec.pop() {
                                     app.undo_vec.push(redo_dir.clone());
                                     app.dirs.remove(app.dirs.iter().position(|d| d == &redo_dir.0).unwrap());
-                                    app.update_prev_dirs();
+                                    app.update_right_pane();
                                     app.save_to_conf();
                                 } else { app.status_txt = "Already at newest change".to_string() }
                             }}
 
                             KeyCode::Char('G') => {
                                 app.sel_dir = app.dirs.len() - 1;
-                                app.update_prev_dirs();
+                                app.update_right_pane()
                             }
                             KeyCode::Char('g') => {
                                 app.sel_dir = 0;
-                                app.update_prev_dirs();
+                                app.update_right_pane()
                             }
                             KeyCode::Char('{') => {
                                 if app.sel_dir == 0 || app.sel_dir as i32 - 3 < 0 {
@@ -360,7 +356,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                     app.sel_dir -= 3;
                                 }
 
-                                app.update_prev_dirs();
+                                app.update_right_pane()
                             }
                             KeyCode::Char('}') => {
                                 if app.sel_dir + 3 > app.dirs.len() {
@@ -369,7 +365,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                     app.sel_dir += 3;
                                 }
 
-                                app.update_prev_dirs();
+                                app.update_right_pane()
                             }
 
                             KeyCode::Char('/') => {

@@ -214,7 +214,15 @@ impl App {
         self.preview_type == PreviewType::Contents
     }
 
-    pub fn read_todo_readme(&mut self) {
+    pub fn update_right_pane(&mut self) {
+        if self.preview_type == PreviewType::Contents {
+            self.update_prev_dirs()
+        } else {
+            self.read_todo_readme()
+        }
+    }
+    
+    fn read_todo_readme(&mut self) {
         if !self.is_preview_contents() {
             let string = if self.is_preview_todo() { "TODO" } else { "README" };
 
@@ -226,7 +234,7 @@ impl App {
         }
     }
 
-    pub fn update_prev_dirs(&mut self) {
+    fn update_prev_dirs(&mut self) {
         if let Some(dir) = self.dirs.get(self.sel_dir) {
             match dir.canonicalize() {
                 Ok(full_path) => {
