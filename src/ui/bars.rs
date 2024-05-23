@@ -52,27 +52,28 @@ fn render_top_bar_git(_app: &App, frame: &mut Frame, main_layout: &Rc<[Rect]>, r
 
 
             let is_up_to_date = {
-                let head = repo.head().unwrap();
-                let branch = head.shorthand().unwrap();
+                if let Ok(head) = repo.head() {
+                    let branch = head.shorthand().unwrap();
 
-                let local_branch = repo.find_branch(
-                    &branch,
-                    git2::BranchType::Local
-                ).unwrap().into_reference();
+                    let local_branch = repo.find_branch(
+                        &branch,
+                        git2::BranchType::Local
+                        ).unwrap().into_reference();
 
-                let upstream_branch = 
-                    repo.find_branch(
-                        &format!("{}/{}",
-                             remote.name().unwrap(),
-                             branch
-                        ),
-                        git2::BranchType::Remote)
-                    .unwrap().into_reference();
+                    let upstream_branch = 
+                        repo.find_branch(
+                            &format!("{}/{}",
+                                     remote.name().unwrap(),
+                                     branch
+                                    ),
+                                    git2::BranchType::Remote)
+                        .unwrap().into_reference();
 
-                let local_commit_id = local_branch.peel_to_commit().unwrap().id();
-                let remote_commit_id = upstream_branch.peel_to_commit().unwrap().id();
+                    let local_commit_id = local_branch.peel_to_commit().unwrap().id();
+                    let remote_commit_id = upstream_branch.peel_to_commit().unwrap().id();
 
-                local_commit_id == remote_commit_id
+                    local_commit_id == remote_commit_id
+                } else { true }
             };
 
             constraints.insert(0, Constraint::Min(3));
@@ -102,7 +103,7 @@ fn render_top_bar_git(_app: &App, frame: &mut Frame, main_layout: &Rc<[Rect]>, r
     // remotes
     if !remote_urls.is_empty() {
         for (i, (url, is_up_to_date)) in remote_urls.iter().enumerate() {
-            let i = if i % 2 == 0 {i} else {i + 1};
+            let i = i * 2;
             frame.render_widget(
                 Paragraph::new(url.to_string()).gray()
                 .block(Block::default().borders(Borders::LEFT)),

@@ -31,11 +31,11 @@
 
 - [x] fix crash when dir in dapu was moved in the fs
 - [ ] fix crashes with git branches
-- [ ] fix crash when there are no commits pushed in a new repo
+- [x] fix crash when there are no commits pushed in a new repo
 
 - [ ] add full path display of current dir
 
-- [ ] remove config struct and ignore uneeded fields from app struct
+- [x] remove config struct and ignore uneeded fields from app struct
 
 - [x] customize bars  (clock / git of sel_dir) ?
 - [ ] syntax highlighting on TODO/README files in preview ?
