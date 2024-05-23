@@ -77,6 +77,56 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
         } else {
 
         // binds for all windows exept when typing
+
+            // ctrl + u/d | { / }
+            if 
+                key.code == KeyCode::Char('{') || 
+                (key.code == KeyCode::Char('u') && key.modifiers == KeyModifiers::CONTROL) 
+            {
+                let (dirs, sel_dir) = {
+                    if app.is_focused_right() && app.is_preview_contents() {
+                        (&mut app.prev.dirs, &mut app.prev.sel_dir)
+                    } else if app.is_focused_dialog() {
+                        (&mut app.dialogbox.dirs, &mut app.dialogbox.sel_dir)
+                    } else {
+                        (&mut app.dirs, &mut app.sel_dir)
+                    }
+                };
+
+                if *sel_dir == 0 || *sel_dir as i32 - 3 < 0 {
+                    *sel_dir = dirs.len() - 1;
+                } else {
+                    *sel_dir -= 3;
+                }
+
+                if app.is_focused_left() {
+                    app.update_right_pane()
+                }
+            } else if 
+                key.code == KeyCode::Char('}') ||
+                (key.code == KeyCode::Char('d') && key.modifiers == KeyModifiers::CONTROL) 
+            {
+                let (dirs, sel_dir) = {
+                    if app.is_focused_right() && app.is_preview_contents() {
+                        (&mut app.prev.dirs, &mut app.prev.sel_dir)
+                    } else if app.is_focused_dialog() {
+                        (&mut app.dialogbox.dirs, &mut app.dialogbox.sel_dir)
+                    } else {
+                        (&mut app.dirs, &mut app.sel_dir)
+                    }
+                };
+
+                if *sel_dir + 3 > dirs.len() {
+                    *sel_dir = 0;
+                } else {
+                    *sel_dir += 3;
+                }
+
+                if app.is_focused_left() {
+                    app.update_right_pane()
+                }
+            }
+
             match key.code {
                 KeyCode::Char('q') | KeyCode::Esc => {
                     if app.seach.main_dirs.is_empty() {
@@ -203,21 +253,6 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                     _ => app.prev.sel_dir - 1 
                                 }
                             }
-                            KeyCode::Char('{') => {
-                                if app.prev.sel_dir == 0 || app.prev.sel_dir as i32 - 3 < 0 {
-                                    app.prev.sel_dir = app.prev.dirs.len() - 1;
-                                } else {
-                                    app.prev.sel_dir -= 3;
-                                }
-                            }
-                            KeyCode::Char('}') => {
-                                if app.prev.sel_dir + 3 > app.prev.dirs.len() {
-                                    app.prev.sel_dir = 0;
-                                } else {
-                                    app.prev.sel_dir += 3;
-                                }
-                            }
-
                             KeyCode::Char('h') | KeyCode::Left => app.set_focus_left(),
 
                             KeyCode::Char('G') => app.prev.sel_dir = app.prev.dirs.len() - 1,
@@ -318,7 +353,7 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 }
                             }
 
-                            KeyCode::Char('u') => {
+                            KeyCode::Char('U') => {
                                 if let Some(undo_dir) = app.undo_vec.pop() {
                                     app.redo_vec.push(undo_dir.clone());
 
@@ -349,25 +384,6 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                                 app.sel_dir = 0;
                                 app.update_right_pane()
                             }
-                            KeyCode::Char('{') => {
-                                if app.sel_dir == 0 || app.sel_dir as i32 - 3 < 0 {
-                                    app.sel_dir = app.dirs.len() - 1;
-                                } else {
-                                    app.sel_dir -= 3;
-                                }
-
-                                app.update_right_pane()
-                            }
-                            KeyCode::Char('}') => {
-                                if app.sel_dir + 3 > app.dirs.len() {
-                                    app.sel_dir = 0;
-                                } else {
-                                    app.sel_dir += 3;
-                                }
-
-                                app.update_right_pane()
-                            }
-
                             KeyCode::Char('/') => {
                                 if app.seach.main_dirs.is_empty(){
                                     app.seach.is_typing = true

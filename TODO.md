@@ -31,6 +31,7 @@
 
 - [x] fix crash when dir in dapu was moved in the fs
 - [ ] fix crashes with git branches
+- [ ] fix crash when there are no commits pushed in a new repo
 
 - [ ] add full path display of current dir
 
