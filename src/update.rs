@@ -1,6 +1,7 @@
 use crossterm::event::{KeyCode, Event, self, KeyModifiers};
 use crate::{app::{App, PreviewType, CurrentWindow}, tui::Tui};
 use std::io::Result;
+use crate::ui;
 
 
 pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
@@ -126,6 +127,15 @@ pub fn update(app: &mut App, _tui: &mut Tui) -> Result<()> {
                     app.update_right_pane()
                 }
             }
+
+            if key.code == KeyCode::Char('e') && key.modifiers == KeyModifiers::CONTROL {
+                let conf_dir = dirs::config_dir().unwrap().join("dapu").join("dapu.ron");
+                std::process::Command::new(&app.default_editor).arg(conf_dir).status()?;
+                _tui.term.clear()?;
+
+                app.dirs = App::get_instance_from_conf(app.only_output_path).dirs;
+            }
+
 
             match key.code {
                 KeyCode::Char('q') | KeyCode::Esc => {

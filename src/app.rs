@@ -163,7 +163,7 @@ impl DialogBox {
 }
 
 impl App {
-    pub fn new(only_path: bool) -> Self {
+    pub fn get_instance_from_conf(only_path: bool) -> Self {
         let config_dir_path = dirs::config_dir().unwrap().join("dapu");
 
         let mut instance =
@@ -187,6 +187,9 @@ impl App {
         }
 
         instance
+    }
+    pub fn new(only_path: bool) -> Self {
+        Self::get_instance_from_conf(only_path)
     } 
 
     pub fn is_focused_right(&self) -> bool {
